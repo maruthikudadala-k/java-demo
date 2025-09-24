@@ -1,0 +1,97 @@
+
+buildscript {
+    dependencies {
+        classpath('gradle.plugin.com.palantir.gradle.docker:gradle-docker:0.13.0')
+    }
+}
+
+plugins {
+    id 'org.springframework.boot' version '2.2.9.RELEASE'
+    id 'java'
+    id 'jacoco'
+}
+
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'com.palantir.docker'
+
+group = 'fracproops.azurecr.io'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    set('springCloudVersion', 'Hoxton.RELEASE')
+}
+
+dependencies {
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    implementation 'org.springframework.cloud:spring-cloud-config-client'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-hystrix'
+    implementation 'org.springframework.cloud:spring-cloud-stream'
+    implementation 'org.springframework.cloud:spring-cloud-starter-stream-kafka'
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    implementation 'org.springframework.security.oauth.boot:spring-security-oauth2-autoconfigure'
+    implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
+
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    // Swagger
+    compile 'com.spring4all:spring-boot-starter-swagger:1.5.0.RELEASE'
+    compile 'io.springfox:springfox-swagger2:2.9.2'
+    compile 'io.springfox:springfox-swagger-ui:2.9.2'
+
+    // Tests
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testCompile 'org.springframework.security:spring-security-oauth2-client:5.4.2'
+    testCompile 'org.springframework.security:spring-security-oauth2-jose:5.4.2'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+jacoco {
+    toolVersion = "0.8.8"
+}
+
+test {
+    useJUnitPlatform()
+    jacoco {
+        enabled = true
+        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+    }
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        xml.required = true
+        xml.destination file("${buildDir}/reports/jacoco.xml")
+    }
+}
+task unpack(type: Copy) {
+    dependsOn bootJar
+}
+
+docker {
+    name "${project.group}/${bootJar.baseName}"
+    files 'run.sh'
+    copySpec.from(tasks.unpack.outputs).into(".")
+    copySpec.from(tasks.bootJar.outputs.files.singleFile).into(".")
+    buildArgs(['JAR_FILE': "$bootJar.archiveName"])
+}
