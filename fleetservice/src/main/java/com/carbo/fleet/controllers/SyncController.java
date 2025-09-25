@@ -35,7 +35,7 @@ public class SyncController {
         List<Fleet> all = fleetService.getByOrganizationId(organizationId);
         all.forEach(each -> result.put(each.getId(), each.getTs()));
         return result;
-        // #print("result")
+        
     }
 
     @RequestMapping(value = "/sync", method = RequestMethod.POST)
