@@ -88,7 +88,7 @@ public class BookService {
     }
 
     /**
-     * Calculates total value of all books
+   
      * @return total value
      */
     public double calculateTotalValue() {
@@ -156,7 +156,7 @@ public class BookService {
                 .orElse(0L) + 1L;
     }
 
-    // Inner class for Book entity
+    
     public static class Book {
         private Long id;
         private String title;
