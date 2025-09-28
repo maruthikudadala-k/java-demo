@@ -29,9 +29,9 @@ public class UserServiceTest {
     public void shouldReturnAllUsers() {
         when(userRepository.findAll()).thenReturn(Collections.emptyList());
 
-        var users = userService.getAll();
+        var result = userService.getAll();
 
-        assertEquals(Collections.emptyList(), users);
+        assertEquals(Collections.emptyList(), result);
         verify(userRepository, times(1)).findAll();
     }
 
@@ -40,9 +40,9 @@ public class UserServiceTest {
         String organizationId = "org123";
         when(userRepository.findByOrganizationId(organizationId)).thenReturn(Collections.emptyList());
 
-        var users = userService.getByOrganizationId(organizationId);
+        var result = userService.getByOrganizationId(organizationId);
 
-        assertEquals(Collections.emptyList(), users);
+        assertEquals(Collections.emptyList(), result);
         verify(userRepository, times(1)).findByOrganizationId(organizationId);
     }
 
@@ -79,15 +79,16 @@ public class UserServiceTest {
         User user = new User();
         when(userRepository.save(user)).thenReturn(user);
 
-        User savedUser = userService.saveUser(user);
+        User result = userService.saveUser(user);
 
-        assertEquals(user, savedUser);
+        assertEquals(user, result);
         verify(userRepository, times(1)).save(user);
     }
 
     @Test
     public void shouldUpdateUser() {
         User user = new User();
+        
         userService.updateUser(user);
 
         verify(userRepository, times(1)).save(user);
@@ -96,6 +97,7 @@ public class UserServiceTest {
     @Test
     public void shouldDeleteUser() {
         String userId = "user123";
+
         userService.deleteUser(userId);
 
         verify(userRepository, times(1)).deleteById(userId);
