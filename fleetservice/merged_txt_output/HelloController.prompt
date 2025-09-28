@@ -1,0 +1,103 @@
+
+You are a professional Java developer and test engineer.
+
+Your task is to generate a **self-contained, safe, and fully compilable JUnit 5 test class** for the module defined below. The project strictly uses **Java 8** and **Mockito 2.x** — follow this configuration without exception.
+
+---
+
+## ✅ TEST GENERATION RULES
+
+### 1️⃣ Scope of Testing
+- ✅ Only test **public methods and constructors** from the `CURRENT MODULE CODE`.
+- ❌ Do **not** test private, protected, or package-private methods, fields, or internal logic.
+
+### 2️⃣ Code Boundaries
+- ✅ Use only types defined in `CURRENT MODULE CODE` or `PROJECT-LEVEL IMPORTS`.
+- ❌ Never define or assume the structure of missing models, enums, helpers, or external dependencies.
+
+### 3️⃣ Input Handling
+- ✅ Treat all inputs as valid and well-formed.
+- ✅ Use safe defaults (e.g., `""`, `Collections.emptyList()`).
+- ❌ Avoid `null` unless explicitly required.
+- ❌ Do not test invalid or edge-case inputs unless the logic handles them.
+
+### 4️⃣ Mockito 2.x Stubbing
+- ✅ Stub every used interaction explicitly.
+- ✅ Match method signatures exactly.
+- ✅ Avoid `null` return values unless handled.
+- ❌ Do not rely on Mockito's default returns or partial mocks.
+
+### 5️⃣ Syntax & Structure
+- ✅ Use **JUnit 5** (`org.junit.jupiter.api.*`) and **Mockito 2.x** only.
+- ✅ Annotate with `@ExtendWith(MockitoExtension.class)`.
+- ✅ Use `@Mock` and `@InjectMocks` for dependency wiring.
+- ✅ Write clear, focused method names like `shouldReturnXWhenY`.
+- ❌ Do not use `@BeforeEach` for `MockitoAnnotations.initMocks`.
+
+### 6️⃣ Import Rules
+- ✅ Include **every required import** explicitly.
+- ❌ Never use wildcard (`*`) or unused imports.
+
+### 7️⃣ Behavior Verification
+- ✅ Only verify externally observable behavior or mock interactions.
+- ❌ Never inspect or test private or internal state.
+
+### 8️⃣ Servlet & Security Contexts
+If the method under test (or any utility it calls) uses `HttpServletRequest` to extract a `Principal`, authentication details, or headers:
+
+- ✅ Use `MockHttpServletRequest` from `org.springframework.mock.web`.
+- ✅ If `request.getUserPrincipal()` is accessed:
+  - Mock the exact principal **type actually used** in the module (e.g., `OAuth2Authentication`, `UsernamePasswordAuthenticationToken`, etc.).
+  - If the logic chains calls (e.g., `getUserAuthentication().getDetails()`), mock and stub each intermediate object in that chain.
+  - Return a minimal `Map<String, Object>` from `getDetails()` with **only required keys** — do **not** assume domain-specific field names unless present in the source code.
+
+- ✅ If `request.getHeader(...)` is accessed, use `request.addHeader(key, value)` in the setup.
+- ✅ If `request.getAttribute(...)` is accessed, use `request.setAttribute(key, value)`.
+
+- ❌ Do not hardcode field names or security class types unless already imported or used in the source.
+- ❌ Do not partially stub or leave method calls unstubbed — mock the full call chain accessed in the method.
+- ❌ Do not assume any Spring Security context unless it appears explicitly in the current module.
+
+### 9️⃣ Absolute Restrictions
+
+* ❌ No reflection, guessing, or reconstruction of undefined types.
+* ❌ No Java 9+ features.
+* ❌ No output other than the test class code.
+
+---
+
+## ✅ OUTPUT FORMAT
+
+Output a single **fully compilable** JUnit 5 test class that includes:
+
+* All required import statements
+* JUnit 5 + Mockito 2.x compliant annotations
+* Focused, deterministic test methods
+
+❌ DO NOT output any explanation, comments, or additional content.
+
+---
+### 📦 PROJECT-LEVEL IMPORTS
+
+## 
+---
+### 🧩 CURRENT MODULE CODE
+
+## // ===== Current file: src\main\java\com\carbo\fleet\controllers\HelloController.java =====
+package com.carbo.fleet.controllers;
+
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RestController
+public class HelloController {
+    
+    @RequestMapping("/")
+    public String index() {
+        return "Greetings from Spring Boot!";
+    }
+    
+}
+
+
+

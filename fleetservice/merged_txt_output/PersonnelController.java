@@ -1,0 +1,467 @@
+// ===== Imported from: com.carbo.fleet.dto.PersonnelDto =====
+package com.carbo.fleet.dto;
+
+import lombok.Builder;
+import lombok.Data;
+
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
+@Builder
+@Data
+public class PersonnelDto {
+
+    private String id;
+
+    @NotEmpty
+    private String firstName;
+
+    @NotEmpty
+    private String secondName;
+
+    @NotEmpty
+    private String jobTitle;
+
+    @NotEmpty
+    private String employeeId;
+
+    @NotNull
+    private Boolean supervisor;
+
+    @NotEmpty
+    private String districtId;
+    private String districtName;
+
+    private String supervisorId;
+    private String supervisorName;
+
+    @NotEmpty
+    private String fleetId;
+    private String fleetName;
+
+    @NotEmpty
+    private String crewId;
+    private String crewName;
+
+    private String organizationId;
+}
+
+// ===== Imported from: com.carbo.fleet.model.PersonnelDisplay =====
+package com.carbo.fleet.model;
+
+import com.carbo.fleet.dto.PersonnelDto;
+import lombok.Builder;
+import lombok.Data;
+
+import java.util.List;
+
+@Builder
+@Data
+public class PersonnelDisplay {
+    private List<PersonnelDto> personnelDisplayObject;
+    private Long totalCount;
+}
+
+// ===== Imported from: com.carbo.fleet.services.PersonnelService =====
+package com.carbo.fleet.services;
+
+import com.carbo.fleet.dto.PersonnelDto;
+import com.carbo.fleet.model.Personnel;
+import com.carbo.fleet.model.PersonnelDisplay;
+import com.carbo.fleet.model.TotalCountObject;
+import com.carbo.fleet.repository.PersonnelDBRepository;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.*;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class PersonnelService {
+
+    public static final Logger logger = LoggerFactory.getLogger(CrewService.class);
+
+    MongoTemplate mongoTemplate;
+    PersonnelDBRepository personnelDBRepository;
+
+    @Autowired
+    public PersonnelService(MongoTemplate mongoTemplate, PersonnelDBRepository personnelDBRepository) {
+        this.mongoTemplate = mongoTemplate;
+        this.personnelDBRepository = personnelDBRepository;
+    }
+
+    public PersonnelDisplay findAll(String organizationId, int offSet, int limit) {
+        return lookUpPersonnel(null, "", "", "", organizationId, offSet, limit);
+    }
+
+    public Boolean savePersonnel(PersonnelDto dto) {
+        try {
+            Personnel newPersonnel = Personnel.builder()
+                    .crewId(dto.getCrewId())
+                    .employeeId(dto.getEmployeeId())
+                    .firstName(dto.getFirstName())
+                    .districtId(dto.getDistrictId())
+                    .jobTitle(dto.getJobTitle())
+                    .fleetId(dto.getFleetId())
+                    .secondName(dto.getSecondName())
+                    .supervisor(dto.getSupervisor())
+                    .organizationId(dto.getOrganizationId())
+                    .build();
+            if (dto.getSupervisorId() != null)
+                newPersonnel.setSupervisorId(dto.getSupervisorId());
+            Personnel createdPersonnel = personnelDBRepository.save(newPersonnel);
+            if (dto.getSupervisor() && dto.getSupervisorId() == null) {
+                newPersonnel.setSupervisorId(createdPersonnel.getId());
+                personnelDBRepository.save(newPersonnel);
+            }
+            return true;
+        } catch (DuplicateKeyException e) {
+            logger.error("duplicate key Value inside Personnel");
+            return false;
+        }
+    }
+
+    public Boolean updatePersonnel(PersonnelDto dto) {
+        try {
+            Optional<Personnel> personnelData = personnelDBRepository.findById(dto.getId());
+            if (personnelData.isPresent()) {
+                Personnel personnel = Personnel.builder()
+                        .id(dto.getId())
+                        .crewId(dto.getCrewId())
+                        .employeeId(dto.getEmployeeId())
+                        .firstName(dto.getFirstName())
+                        .districtId(dto.getDistrictId())
+                        .jobTitle(dto.getJobTitle())
+                        .fleetId(dto.getFleetId())
+                        .secondName(dto.getSecondName())
+                        .supervisor(dto.getSupervisor())
+                        .supervisorId(dto.getSupervisorId())
+                        .organizationId(dto.getOrganizationId())
+                        .build();
+                personnelDBRepository.save(personnel);
+                return true;
+            }
+        } catch (Exception e) {
+            logger.error("Exception while updating personnel" + e.getMessage());
+        }
+        return false;
+    }
+
+    public PersonnelDto findById(String id) {
+        ArrayList<String> list = new ArrayList<>();
+        list.add(id);
+        PersonnelDisplay personnel = lookUpPersonnel(list,"", "","",null, 0, 10);
+        return personnel.getPersonnelDisplayObject().stream().findFirst().orElse(null);
+    }
+
+    public void deletePersonnel(String id) {
+        Optional<Personnel> personnel = personnelDBRepository.findById(id);
+        if (personnel.isPresent()) {
+            personnelDBRepository.deleteById(id);
+        }
+    }
+
+    public PersonnelDisplay lookUpPersonnel
+            (List<String> personnelId, String personnelName, String districtId, String jobTitle, String organizationId, int offSet, int limit) {
+
+        LookupOperation lookupFleet = LookupOperation.newLookup()
+                .from("fleets")
+                .localField("fleetId")
+                .foreignField("_id")
+                .as("fleet");
+
+        UnwindOperation unwindFleet = Aggregation.unwind("fleet", true);
+
+        LookupOperation lookupDistrict = LookupOperation.newLookup()
+                .from("districts")
+                .localField("districtId")
+                .foreignField("_id")
+                .as("district");
+
+        UnwindOperation unwindDistrict = Aggregation.unwind("district", true);
+        AggregationOperation addFields = context -> new Document("$addFields",
+                new Document("crewIdObj",
+                        new Document("$toObjectId", "$crewId")
+                )
+        );
+        LookupOperation lookupCrew = LookupOperation.newLookup()
+                .from("crews")
+                .localField("crewIdObj")
+                .foreignField("_id")
+                .as("crew");
+
+        UnwindOperation unwindCrew = Aggregation.unwind("crew", true);
+
+        AggregationOperation addSupervisorIdObj = context -> new Document("$addFields",
+                new Document("supervisorIdObj",
+                        new Document("$toObjectId", "$supervisorId")
+                )
+        );
+
+        LookupOperation lookupSupervisor = LookupOperation.newLookup()
+                .from("personnel")             // same collection
+                .localField("supervisorIdObj")   // field in current doc
+                .foreignField("_id")          // match with `_id` of supervisor
+                .as("supervisorInfo");
+
+        UnwindOperation unwindsupervisorInfo = Aggregation.unwind("supervisorInfo", true);
+
+        ProjectionOperation project = Aggregation.project()
+                .and("fleet.name").as("fleetName")
+                .and("district.name").as("districtName")
+                .and("crew.name").as("crewName")
+                .and("supervisorInfo.firstName" ) .as("supervisorName")
+                .andInclude("firstName", "secondName", "jobTitle", "employeeId", "supervisorId", "supervisor", "organizationId","districtId","crewId","fleetId");
+
+        SkipOperation skip = Aggregation.skip((long) offSet);
+        LimitOperation limitValue = Aggregation.limit(limit);
+        MatchOperation match;
+        if (personnelId != null) {
+            match = Aggregation.match(Criteria.where("_id").in(personnelId));
+        } else if (StringUtils.hasText(personnelName) && StringUtils.hasText(districtId) && StringUtils.hasText(jobTitle)) {
+            match = Aggregation.match(
+                    new Criteria().andOperator(
+                            Criteria.where("districtId").is(districtId),
+                            Criteria.where("jobTitle").is(jobTitle),
+                            new Criteria().orOperator(
+                                    Criteria.where("firstName").is(personnelName),
+                                    Criteria.where("secondName").is(personnelName)
+                            )
+                    )
+            );
+
+        } else if (StringUtils.hasText(personnelName) && StringUtils.hasText(districtId)) {
+            match = Aggregation.match(
+                    new Criteria().andOperator(
+                            Criteria.where("districtId").is(districtId),
+                            new Criteria().orOperator(
+                                    Criteria.where("firstName").is(personnelName),
+                                    Criteria.where("secondName").is(personnelName)
+                            )
+                    )
+            );
+
+        } else if (!personnelName.isEmpty()) {
+            match = Aggregation.match(
+                    new Criteria().orOperator(
+                            Criteria.where("firstName").is(personnelName),
+                            Criteria.where("secondName").is(personnelName)
+                    )
+            );
+
+        } else {
+            match = Aggregation.match(Criteria.where("organizationId").is(organizationId));
+        }
+        Aggregation aggregation = Aggregation.newAggregation(
+                match,
+                lookupFleet,
+                unwindFleet,
+                lookupDistrict,
+                unwindDistrict,
+                addFields,
+                lookupCrew,
+                unwindCrew,
+                addSupervisorIdObj,
+                lookupSupervisor,
+                unwindsupervisorInfo,
+                project,
+                skip,
+                limitValue
+        );
+
+        Aggregation countAggregation = Aggregation.newAggregation(
+                match,
+                Aggregation.count().as("totalCount")
+        );
+        TotalCountObject totalCountObject = mongoTemplate.aggregate(countAggregation,"personnel",TotalCountObject.class).getUniqueMappedResult();
+        return PersonnelDisplay.builder()
+                .personnelDisplayObject(mongoTemplate.aggregate(aggregation, "personnel", PersonnelDto.class).getMappedResults())
+                .totalCount(totalCountObject != null ? totalCountObject.getTotalCount() : 0)
+                .build();
+    }
+
+    public PersonnelDisplay findbyValue(String organizationId, String personnelName, String districtId, String jobTitle, int offSet, int limit) {
+        return lookUpPersonnel(null, personnelName, districtId, jobTitle, organizationId, offSet, limit);
+    }
+}
+
+// ===== Imported from: com.carbo.fleet.utils.Constants =====
+package com.carbo.fleet.utils;
+
+public class Constants {
+
+    public static final String ADMIN = "ADMIN";
+    public static final String CARBO_ADMIN = "CARBO_ADMIN";
+    public static final String BACK_OFFICE =  "BACK_OFFICE";
+    public static final String USER = "USER";
+    public static final String READ_ONLY = "READ_ONLY";
+    public static final String OPERATION = "OPERATION";
+    public static final String SALES_USER = "SALES_USER";
+    public static final String MOVE_ONSITE_EQUIPMENT = "MOVE_ONSITE_EQUIPMENT";
+    public static final String APP = "APP";
+    public static final String SUPER_SALES_USER = "SUPER_SALES_USER";
+    public static final String MS_ORGANIZATION = "MS_ORGANIZATION";
+    public static final String MS_ADMIN = "MS_ADMIN";
+    public static final String MS_WELL = "MS_WELL";
+    public static final String MS_PAD = "MS_PAD";
+    public static final String MS_OPERATOR = "MS_OPERATOR";
+    public static final String MS_DISTRICT = "MS_DISTRICT";
+    public static final String MS_FLEET = "MS_FLEET";
+    public static final String MS_VENDOR = "MS_VENDOR";
+    public static final String MS_EMAIL = "MS_EMAIL";
+    public static final String MS_MISC_DATA = "MS_MISC_DATA";
+    public static final String MS_SERVICE_COMPANY = "MS_SERVICE_COMPANY";
+    public static final String MS_JOB = "MS_JOB";
+    public static final String MS_PUMP_ISSUE = "MS_PUMP_ISSUE";
+    public static final String MS_ACTIVITY_LOG = "MS_ACTIVITY_LOG";
+    public static final String MS_FIELD_TICKET = "MS_FIELD_TICKET";
+    public static final String MS_ONSITE_EQUIPMENT = "MS_ONSITE_EQUIPMENT";
+    public static final String MS_CHANGE_LOG = "MS_CHANGE_LOG";
+    public static final String MS_PROPPANT_DELIVERY = "MS_PROPPANT_DELIVERY";
+    public static final String MS_CHEMICAL_DELIVERY = "MS_CHEMICAL_DELIVERY";
+    public static final String MS_PROPPANT_STAGE = "MS_PROPPANT_STAGE";
+    public static final String MS_CHEMICAL_STAGE = "MS_CHEMICAL_STAGE";
+    public static final String MS_WS = "MS_WS";
+    public static final String MS_PUMP_SCHEDULE = "MS_PUMP_SCHEDULE";
+    public static final String MS_WELL_INFO = "MS_WELL_INFO";
+    public static final String MS_CHECKLIST = "MS_CHECKLIST";
+    public static final String MS_WORKOVER = "MS_WORKOVER";
+    public static final String MS_MAINTENANCE = "MS_MAINTENANCE";
+    public static final String MS_CONSUMABLE = "MS_CONSUMABLE";
+    public static final String MS_OPERATION_OVERVIEW = "MS_OPERATION_OVERVIEW";
+    public static final String ORGANIZATION = "ORGANIZATION";
+    public static final String USER_MANAGEMENT = "USER_MANAGEMENT";
+
+    public static final String PRICEBOOK = "PRICEBOOK";
+    public static final String PROCUREMENT = "PROCUREMENT";
+
+    public static final String CREW_SCHEDULING = "CREW_SCHEDULING";
+
+    public static final String FIELDCOORDINATOR = "FIELDCOORDINATOR";
+
+    public static final String SALES_FIELD_USER = "SALES_FIELD_USER";
+
+    public static final String SERVICEMANAGER = "SERVICEMANAGER";
+    public static final String UNABLE_TO_FETCH_DATA_CODE ="UNABLE_TO_FETCH_DATA" ;
+    public static final String UNABLE_TO_FETCH_DATA_MESSAGE ="unable to fetch data" ;
+    public static final String CREW_ALREADY_EXISTS = "Crew already exists";
+    public static final String CREW_UPDATION_FAILED = "Unable to update Crew";
+    public static final String PERSONNEL_ALREADY_EXISTS = "Personnel already exists";
+    public static final String UNABLE_TO_UPDATE_PERSONNEL = "Unable to update Personnel";
+    public static final String PERSONNEL_CREATED = "personnel_created";
+}
+
+// ===== Imported from: com.carbo.fleet.utils.ControllerUtil.getOrganizationId =====
+package com.carbo.fleet.utils;
+
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
+
+import javax.servlet.http.HttpServletRequest;
+import java.security.Principal;
+import java.util.Map;
+
+public class ControllerUtil {
+    public static String getOrganizationId(HttpServletRequest request) {
+        Principal principal = request.getUserPrincipal();
+        return ((Map) ((OAuth2Authentication) principal).getUserAuthentication().getDetails()).get("organizationId").toString();
+    }
+    public static String getOrganizationType(HttpServletRequest request) {
+        Principal principal = request.getUserPrincipal();
+        return ((Map) ((OAuth2Authentication) principal).getUserAuthentication().getDetails()).get("organizationType").toString();
+    }
+    public static String getUserName(HttpServletRequest request) {
+        Principal principal = request.getUserPrincipal();
+        return ((Map) ((OAuth2Authentication) principal).getUserAuthentication().getDetails()).get("userName").toString();
+    }
+}
+
+// ===== Current file: src\main\java\com\carbo\fleet\controllers\PersonnelController.java =====
+package com.carbo.fleet.controllers;
+
+import com.carbo.fleet.dto.PersonnelDto;
+import com.carbo.fleet.model.PersonnelDisplay;
+import com.carbo.fleet.services.PersonnelService;
+import com.carbo.fleet.utils.Constants;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.carbo.fleet.utils.ControllerUtil.getOrganizationId;
+
+@RestController
+@RequestMapping("v1/personnel")
+public class PersonnelController {
+
+    @Autowired
+    PersonnelService personnelService;
+
+    @GetMapping(value = "/", produces = MediaType.APPLICATION_JSON_VALUE)
+    public PersonnelDisplay getAllPersonnel(HttpServletRequest request,
+                                                                    @RequestParam(name = "offSet", defaultValue = "0", required = false) int offSet,
+                                                                    @RequestParam(name = "limit", defaultValue = "10", required = false) int limit) {
+        String organizationId = getOrganizationId(request);
+        return personnelService.findAll(organizationId, offSet, limit);
+    }
+
+    @GetMapping("/{id}")
+    public PersonnelDto getPersonnel(HttpServletRequest request, @PathVariable String id) {
+        return personnelService.findById(id);
+    }
+
+    @PostMapping(value = "/",produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> createPersonnel(HttpServletRequest request, @Valid @RequestBody PersonnelDto personnelDto) {
+        String organizationId = getOrganizationId(request);
+        personnelDto.setOrganizationId(organizationId);
+        Boolean status = personnelService.savePersonnel(personnelDto);
+        Map<String, String> message = new HashMap<>();
+        if (status) {
+            message.put("successMessage", Constants.PERSONNEL_CREATED);
+            return ResponseEntity.status(HttpStatus.CREATED).body(message);
+        } else {
+            message.put("errorMessage", Constants.PERSONNEL_ALREADY_EXISTS);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(message);
+        }
+    }
+
+    @PutMapping(value = "/",produces = MediaType.APPLICATION_JSON_VALUE)
+    public PersonnelDto updatePersonnel(HttpServletRequest request, @RequestBody PersonnelDto personnelDto) {
+        String organizationId = getOrganizationId(request);
+        personnelDto.setOrganizationId(organizationId);
+        personnelService.updatePersonnel(personnelDto);
+        return personnelService.findById(personnelDto.getId());
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePersonnel(@PathVariable String id) {
+        personnelService.deletePersonnel(id);
+    }
+
+    @GetMapping("/getByField")
+    public PersonnelDisplay getAllPersonnelByFilter(HttpServletRequest request,
+                                                              @RequestParam(name = "offSet", defaultValue = "0", required = false) int offSet,
+                                                              @RequestParam(name = "limit", defaultValue = "10", required = false) int limit,
+                                                              @RequestParam(value = "personnelName", defaultValue = "", required = false) String personnelName,
+                                                              @RequestParam(value = "districtId", defaultValue = "", required = false) String districtId,
+                                                              @RequestParam(value = "jobTitle", defaultValue = "", required = false) String jobTitle) {
+        String organizationId = getOrganizationId(request);
+        return personnelService.findbyValue(organizationId, personnelName, districtId, jobTitle, offSet, limit);
+    }
+}
+
