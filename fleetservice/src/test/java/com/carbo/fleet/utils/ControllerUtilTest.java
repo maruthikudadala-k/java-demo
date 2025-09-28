@@ -15,55 +15,68 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class ControllerUtilTest {
+public class ControllerUtilTest {
 
     @Mock
     private HttpServletRequest request;
 
     @Mock
-    private OAuth2Authentication oAuth2Authentication;
+    private OAuth2Authentication oauth2Authentication;
 
     @Test
-    void shouldReturnOrganizationIdWhenRequestIsValid() {
+    public void shouldReturnOrganizationIdWhenRequestIsValid() {
         Map<String, Object> details = new HashMap<>();
-        details.put("organizationId", "org123");
-        
-        Mockito.when(request.getUserPrincipal()).thenReturn(oAuth2Authentication);
-        Mockito.when(oAuth2Authentication.getUserAuthentication()).thenReturn(Mockito.mock(Principal.class));
-        Mockito.when(oAuth2Authentication.getUserAuthentication().getDetails()).thenReturn(details);
+        details.put("organizationId", "org-123");
+        details.put("organizationType", "type-xyz");
+        details.put("userName", "user-abc");
+
+        Principal principal = Mockito.mock(Principal.class);
+        when(request.getUserPrincipal()).thenReturn(principal);
+        when(principal instanceof OAuth2Authentication).thenReturn(true);
+        when(((OAuth2Authentication) principal).getUserAuthentication()).thenReturn(oauth2Authentication);
+        when(oauth2Authentication.getDetails()).thenReturn(details);
 
         String organizationId = ControllerUtil.getOrganizationId(request);
-        
-        assertEquals("org123", organizationId);
+
+        assertEquals("org-123", organizationId);
     }
 
     @Test
-    void shouldReturnOrganizationTypeWhenRequestIsValid() {
+    public void shouldReturnOrganizationTypeWhenRequestIsValid() {
         Map<String, Object> details = new HashMap<>();
-        details.put("organizationType", "typeA");
+        details.put("organizationId", "org-123");
+        details.put("organizationType", "type-xyz");
+        details.put("userName", "user-abc");
 
-        Mockito.when(request.getUserPrincipal()).thenReturn(oAuth2Authentication);
-        Mockito.when(oAuth2Authentication.getUserAuthentication()).thenReturn(Mockito.mock(Principal.class));
-        Mockito.when(oAuth2Authentication.getUserAuthentication().getDetails()).thenReturn(details);
+        Principal principal = Mockito.mock(Principal.class);
+        when(request.getUserPrincipal()).thenReturn(principal);
+        when(principal instanceof OAuth2Authentication).thenReturn(true);
+        when(((OAuth2Authentication) principal).getUserAuthentication()).thenReturn(oauth2Authentication);
+        when(oauth2Authentication.getDetails()).thenReturn(details);
 
         String organizationType = ControllerUtil.getOrganizationType(request);
-        
-        assertEquals("typeA", organizationType);
+
+        assertEquals("type-xyz", organizationType);
     }
 
     @Test
-    void shouldReturnUserNameWhenRequestIsValid() {
+    public void shouldReturnUserNameWhenRequestIsValid() {
         Map<String, Object> details = new HashMap<>();
-        details.put("userName", "user1");
+        details.put("organizationId", "org-123");
+        details.put("organizationType", "type-xyz");
+        details.put("userName", "user-abc");
 
-        Mockito.when(request.getUserPrincipal()).thenReturn(oAuth2Authentication);
-        Mockito.when(oAuth2Authentication.getUserAuthentication()).thenReturn(Mockito.mock(Principal.class));
-        Mockito.when(oAuth2Authentication.getUserAuthentication().getDetails()).thenReturn(details);
+        Principal principal = Mockito.mock(Principal.class);
+        when(request.getUserPrincipal()).thenReturn(principal);
+        when(principal instanceof OAuth2Authentication).thenReturn(true);
+        when(((OAuth2Authentication) principal).getUserAuthentication()).thenReturn(oauth2Authentication);
+        when(oauth2Authentication.getDetails()).thenReturn(details);
 
         String userName = ControllerUtil.getUserName(request);
-        
-        assertEquals("user1", userName);
+
+        assertEquals("user-abc", userName);
     }
 }
