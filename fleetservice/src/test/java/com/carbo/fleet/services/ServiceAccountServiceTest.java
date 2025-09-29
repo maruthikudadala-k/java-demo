@@ -17,7 +17,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ServiceAccountServiceTest {
-    
+
     @Mock
     private ServiceAccountMongoDbRepository serviceAccountMongoDbRepository;
 
@@ -29,7 +29,7 @@ public class ServiceAccountServiceTest {
         when(serviceAccountMongoDbRepository.findAll()).thenReturn(Collections.emptyList());
 
         assertEquals(Collections.emptyList(), serviceAccountService.getAll());
-        verify(serviceAccountMongoDbRepository, times(1)).findAll();
+        verify(serviceAccountMongoDbRepository).findAll();
     }
 
     @Test
@@ -38,19 +38,19 @@ public class ServiceAccountServiceTest {
         when(serviceAccountMongoDbRepository.findByOrganizationId(organizationId)).thenReturn(Collections.emptyList());
 
         assertEquals(Collections.emptyList(), serviceAccountService.getByOrganizationId(organizationId));
-        verify(serviceAccountMongoDbRepository, times(1)).findByOrganizationId(organizationId);
+        verify(serviceAccountMongoDbRepository).findByOrganizationId(organizationId);
     }
 
     @Test
     public void shouldReturnServiceAccountById() {
-        String serviceAccountId = "acc123";
+        String serviceAccountId = "sa123";
         ServiceAccount serviceAccount = new ServiceAccount();
         when(serviceAccountMongoDbRepository.findById(serviceAccountId)).thenReturn(Optional.of(serviceAccount));
 
         Optional<ServiceAccount> result = serviceAccountService.get(serviceAccountId);
         assertTrue(result.isPresent());
         assertEquals(serviceAccount, result.get());
-        verify(serviceAccountMongoDbRepository, times(1)).findById(serviceAccountId);
+        verify(serviceAccountMongoDbRepository).findById(serviceAccountId);
     }
 
     @Test
@@ -60,22 +60,22 @@ public class ServiceAccountServiceTest {
 
         ServiceAccount result = serviceAccountService.save(serviceAccount);
         assertEquals(serviceAccount, result);
-        verify(serviceAccountMongoDbRepository, times(1)).save(serviceAccount);
+        verify(serviceAccountMongoDbRepository).save(serviceAccount);
     }
 
     @Test
     public void shouldUpdateServiceAccount() {
         ServiceAccount serviceAccount = new ServiceAccount();
-
         serviceAccountService.update(serviceAccount);
-        verify(serviceAccountMongoDbRepository, times(1)).save(serviceAccount);
+
+        verify(serviceAccountMongoDbRepository).save(serviceAccount);
     }
 
     @Test
     public void shouldDeleteServiceAccountById() {
-        String serviceAccountId = "acc123";
-
+        String serviceAccountId = "sa123";
         serviceAccountService.delete(serviceAccountId);
-        verify(serviceAccountMongoDbRepository, times(1)).deleteById(serviceAccountId);
+
+        verify(serviceAccountMongoDbRepository).deleteById(serviceAccountId);
     }
 }
