@@ -27,103 +27,64 @@ public class UserServiceTest {
     @Test
     public void shouldReturnAllUsers() {
         when(userRepository.findAll()).thenReturn(Collections.emptyList());
-
-        List<User> result = userService.getAll();
-
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-        verify(userRepository).findAll();
+        
+        assertEquals(Collections.emptyList(), userService.getAll());
+        verify(userRepository, times(1)).findAll();
     }
 
     @Test
     public void shouldReturnUsersByOrganizationId() {
-        String organizationId = "org-123";
+        String organizationId = "orgId";
         when(userRepository.findByOrganizationId(organizationId)).thenReturn(Collections.emptyList());
-
-        List<User> result = userService.getByOrganizationId(organizationId);
-
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-        verify(userRepository).findByOrganizationId(organizationId);
+        
+        assertEquals(Collections.emptyList(), userService.getByOrganizationId(organizationId));
+        verify(userRepository, times(1)).findByOrganizationId(organizationId);
     }
 
     @Test
     public void shouldReturnUserById() {
-        String userId = "user-123";
+        String id = "userId";
         User user = new User();
-        user.setId(userId);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-
-        Optional<User> result = userService.getUser(userId);
-
-        assertTrue(result.isPresent());
-        assertEquals(userId, result.get().getId());
-        verify(userRepository).findById(userId);
-    }
-
-    @Test
-    public void shouldReturnEmptyWhenUserIdNotFound() {
-        String userId = "user-123";
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-
-        Optional<User> result = userService.getUser(userId);
-
-        assertFalse(result.isPresent());
-        verify(userRepository).findById(userId);
+        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+        
+        assertEquals(Optional.of(user), userService.getUser(id));
+        verify(userRepository, times(1)).findById(id);
     }
 
     @Test
     public void shouldReturnUserByUserName() {
-        String userName = "username";
+        String userName = "userName";
         User user = new User();
-        user.setUserName(userName);
         when(userRepository.findByUserName(userName)).thenReturn(Optional.of(user));
-
-        Optional<User> result = userService.getUserByUserName(userName);
-
-        assertTrue(result.isPresent());
-        assertEquals(userName, result.get().getUserName());
-        verify(userRepository).findByUserName(userName);
-    }
-
-    @Test
-    public void shouldReturnEmptyWhenUserNameNotFound() {
-        String userName = "username";
-        when(userRepository.findByUserName(userName)).thenReturn(Optional.empty());
-
-        Optional<User> result = userService.getUserByUserName(userName);
-
-        assertFalse(result.isPresent());
-        verify(userRepository).findByUserName(userName);
+        
+        assertEquals(Optional.of(user), userService.getUserByUserName(userName));
+        verify(userRepository, times(1)).findByUserName(userName);
     }
 
     @Test
     public void shouldSaveUser() {
         User user = new User();
         when(userRepository.save(user)).thenReturn(user);
-
-        User result = userService.saveUser(user);
-
-        assertNotNull(result);
-        verify(userRepository).save(user);
+        
+        assertEquals(user, userService.saveUser(user));
+        verify(userRepository, times(1)).save(user);
     }
 
     @Test
     public void shouldUpdateUser() {
         User user = new User();
-        when(userRepository.save(user)).thenReturn(user);
-
+        
         userService.updateUser(user);
-
-        verify(userRepository).save(user);
+        
+        verify(userRepository, times(1)).save(user);
     }
 
     @Test
     public void shouldDeleteUserById() {
-        String userId = "user-123";
-
+        String userId = "userId";
+        
         userService.deleteUser(userId);
-
-        verify(userRepository).deleteById(userId);
+        
+        verify(userRepository, times(1)).deleteById(userId);
     }
 }

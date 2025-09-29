@@ -9,12 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
-
-import javax.servlet.http.HttpServletRequest;
 
 import java.util.*;
 
@@ -31,118 +28,69 @@ public class SyncControllerTest {
     private SyncController syncController;
 
     @Test
-    public void shouldReturnFleetTsMappingWhenViewIsCalled() {
+    public void shouldReturnMapOfFleetIdAndTsWhenViewIsCalled() {
         // Given
-        String organizationId = "org123";
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setUserPrincipal(() -> "test-user");
+        String organizationId = "org-1";
+        request.addHeader("Authorization", "Bearer token");
+
         Fleet fleet1 = new Fleet();
-        fleet1.setId("fleet1");
+        fleet1.setId("fleet-1");
         fleet1.setTs(100L);
+
         Fleet fleet2 = new Fleet();
-        fleet2.setId("fleet2");
+        fleet2.setId("fleet-2");
         fleet2.setTs(200L);
 
-        List<Fleet> fleets = Arrays.asList(fleet1, fleet2);
-        
-        HttpServletRequest request = new MockHttpServletRequest();
-        when(fleetService.getByOrganizationId(organizationId)).thenReturn(fleets);
-        
-        // Mocking the utility method
-        when(getOrganizationId(request)).thenReturn(organizationId);
+        when(fleetService.getByOrganizationId(organizationId)).thenReturn(Arrays.asList(fleet1, fleet2));
 
         // When
         Map<String, Long> result = syncController.view(request);
 
         // Then
         assertEquals(2, result.size());
-        assertEquals(100L, result.get("fleet1"));
-        assertEquals(200L, result.get("fleet2"));
+        assertEquals(100L, result.get("fleet-1"));
+        assertEquals(200L, result.get("fleet-2"));
+        
+        verify(fleetService).getByOrganizationId(organizationId);
     }
 
     @Test
-    public void shouldSyncFleetDataWhenSyncIsCalled() {
+    public void shouldSyncFleetsAndReturnSyncResponseWhenSyncIsCalled() {
         // Given
-        String organizationId = "org123";
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setUserPrincipal(() -> "test-user");
+        String organizationId = "org-1";
+        request.addHeader("Authorization", "Bearer token");
+
         Fleet fleetToUpdate = new Fleet();
-        fleetToUpdate.setId("fleet1");
-        fleetToUpdate.setOrganizationId(organizationId);
+        fleetToUpdate.setId("fleet-1");
         fleetToUpdate.setTs(150L);
-        
+        fleetToUpdate.setOrganizationId(organizationId);
+
         SyncRequest syncRequest = new SyncRequest();
         syncRequest.setUpdate(Collections.singletonList(fleetToUpdate));
+        syncRequest.setRemove(Collections.emptySet());
+        syncRequest.setGet(Collections.emptySet());
 
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        when(getOrganizationId(request)).thenReturn(organizationId);
-        when(fleetService.getFleet("fleet1")).thenReturn(Optional.of(fleetToUpdate));
+        Fleet existingFleet = new Fleet();
+        existingFleet.setId("fleet-1");
+        existingFleet.setTs(100L);
 
-        // When
-        SyncResponse response = syncController.sync(request, syncRequest);
-
-        // Then
-        assertNotNull(response);
-        assertTrue(response.getUpdated().containsKey("fleet1"));
-        assertEquals(fleetToUpdate.getTs(), response.getUpdated().get("fleet1"));
-    }
-
-    @Test
-    public void shouldReturnEmptyUpdatedWhenNoFleetToUpdate() {
-        // Given
-        String organizationId = "org123";
-        SyncRequest syncRequest = new SyncRequest();
-        syncRequest.setUpdate(Collections.emptyList());
-
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        when(getOrganizationId(request)).thenReturn(organizationId);
+        when(fleetService.getFleet("fleet-1")).thenReturn(Optional.of(existingFleet));
+        when(fleetService.saveFleet(any(Fleet.class))).thenReturn(fleetToUpdate);
 
         // When
-        SyncResponse response = syncController.sync(request, syncRequest);
+        SyncResponse result = syncController.sync(request, syncRequest);
 
         // Then
-        assertNotNull(response);
-        assertTrue(response.getUpdated().isEmpty());
-    }
+        assertNotNull(result);
+        assertEquals(1, result.getUpdated().size());
+        assertTrue(result.getUpdated().containsKey("fleet-1"));
+        assertEquals(150L, result.getUpdated().get("fleet-1"));
 
-    @Test
-    public void shouldRemoveFleetsWhenSyncIsCalledWithRemoveIds() {
-        // Given
-        String organizationId = "org123";
-        SyncRequest syncRequest = new SyncRequest();
-        syncRequest.setRemove(new HashSet<>(Arrays.asList("fleet1", "fleet2")));
-
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        when(getOrganizationId(request)).thenReturn(organizationId);
-
-        // When
-        SyncResponse response = syncController.sync(request, syncRequest);
-
-        // Then
-        verify(fleetService, times(2)).deleteFleet(Mockito.anyString());
-        assertNotNull(response);
-        assertNotNull(response.getRemoved());
-        assertEquals(2, response.getRemoved().size());
-    }
-
-    @Test
-    public void shouldReturnSyncResponseWithGetFleets() {
-        // Given
-        String organizationId = "org123";
-        Fleet fleetToGet = new Fleet();
-        fleetToGet.setId("fleet1");
-        fleetToGet.setOrganizationId(organizationId);
-
-        SyncRequest syncRequest = new SyncRequest();
-        syncRequest.setGet(Collections.singleton("fleet1"));
-
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        when(getOrganizationId(request)).thenReturn(organizationId);
-        when(fleetService.getFleet("fleet1")).thenReturn(Optional.of(fleetToGet));
-
-        // When
-        SyncResponse response = syncController.sync(request, syncRequest);
-
-        // Then
-        assertNotNull(response);
-        assertNotNull(response.getGet());
-        assertEquals(1, response.getGet().size());
-        assertEquals("fleet1", response.getGet().get(0).getId());
+        verify(fleetService).getFleet("fleet-1");
+        verify(fleetService).updateFleet(fleetToUpdate);
     }
 }

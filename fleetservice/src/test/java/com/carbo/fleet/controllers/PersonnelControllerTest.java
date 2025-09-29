@@ -4,21 +4,21 @@ package com.carbo.fleet.controllers;
 import com.carbo.fleet.dto.PersonnelDto;
 import com.carbo.fleet.model.PersonnelDisplay;
 import com.carbo.fleet.services.PersonnelService;
+import com.carbo.fleet.utils.Constants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class PersonnelControllerTest {
@@ -26,93 +26,119 @@ public class PersonnelControllerTest {
     @Mock
     private PersonnelService personnelService;
 
-    @Mock
-    private HttpServletRequest request;
-
     @InjectMocks
     private PersonnelController personnelController;
 
-    @Test
-    public void shouldReturnPersonnelDisplayWhenGetAllPersonnel() {
-        String organizationId = "testOrgId";
-        PersonnelDisplay expectedDisplay = PersonnelDisplay.builder().build();
-        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
-        when(personnelService.findAll(eq(organizationId), anyInt(), anyInt())).thenReturn(expectedDisplay);
+    private MockHttpServletRequest request = new MockHttpServletRequest();
 
+    @Test
+    public void shouldReturnAllPersonnelWhenGetAllPersonnel() {
+        // Arrange
+        String organizationId = "org123";
+        request.addHeader("Authorization", "Bearer token");
+        when(personnelService.findAll(organizationId, 0, 10)).thenReturn(new PersonnelDisplay());
+
+        // Act
         PersonnelDisplay result = personnelController.getAllPersonnel(request, 0, 10);
 
-        assertEquals(expectedDisplay, result);
+        // Assert
+        assertEquals(new PersonnelDisplay(), result);
+        verify(personnelService).findAll(organizationId, 0, 10);
     }
 
     @Test
-    public void shouldReturnPersonnelDtoWhenGetPersonnel() {
-        String id = "testId";
-        PersonnelDto expectedPersonnel = PersonnelDto.builder().id(id).build();
-        when(personnelService.findById(id)).thenReturn(expectedPersonnel);
+    public void shouldReturnPersonnelWhenGetPersonnelById() {
+        // Arrange
+        String personnelId = "pers123";
+        PersonnelDto personnelDto = new PersonnelDto();
+        when(personnelService.findById(personnelId)).thenReturn(personnelDto);
 
-        PersonnelDto result = personnelController.getPersonnel(request, id);
+        // Act
+        PersonnelDto result = personnelController.getPersonnel(request, personnelId);
 
-        assertEquals(expectedPersonnel, result);
+        // Assert
+        assertEquals(personnelDto, result);
+        verify(personnelService).findById(personnelId);
     }
 
     @Test
-    public void shouldCreatePersonnelAndReturnCreatedResponse() {
-        PersonnelDto personnelDto = PersonnelDto.builder().build();
-        String organizationId = "testOrgId";
-        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
-        when(personnelService.savePersonnel(personnelDto)).thenReturn(true);
+    public void shouldCreatePersonnelWhenValidPostRequest() {
+        // Arrange
+        request.addHeader("Authorization", "Bearer token");
+        PersonnelDto personnelDto = new PersonnelDto();
+        personnelDto.setOrganizationId("org123");
+        when(personnelService.savePersonnel(any(PersonnelDto.class))).thenReturn(true);
 
+        // Act
         ResponseEntity<Object> response = personnelController.createPersonnel(request, personnelDto);
 
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertEquals("personnel_created", ((ResponseEntity<?>) response).getBody().get("successMessage"));
+        // Assert
+        assertEquals(201, response.getStatusCodeValue());
+        assertEquals("personnel_created", ((HashMap<String, String>) response.getBody()).get("successMessage"));
+        verify(personnelService).savePersonnel(personnelDto);
     }
 
     @Test
-    public void shouldReturnConflictResponseWhenPersonnelAlreadyExists() {
-        PersonnelDto personnelDto = PersonnelDto.builder().build();
-        String organizationId = "testOrgId";
-        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
-        when(personnelService.savePersonnel(personnelDto)).thenReturn(false);
+    public void shouldReturnConflictWhenPersonnelAlreadyExists() {
+        // Arrange
+        request.addHeader("Authorization", "Bearer token");
+        PersonnelDto personnelDto = new PersonnelDto();
+        personnelDto.setOrganizationId("org123");
+        when(personnelService.savePersonnel(any(PersonnelDto.class))).thenReturn(false);
 
+        // Act
         ResponseEntity<Object> response = personnelController.createPersonnel(request, personnelDto);
 
-        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertEquals("Personnel already exists", ((ResponseEntity<?>) response).getBody().get("errorMessage"));
+        // Assert
+        assertEquals(409, response.getStatusCodeValue());
+        assertEquals("Personnel already exists", ((HashMap<String, String>) response.getBody()).get("errorMessage"));
+        verify(personnelService).savePersonnel(personnelDto);
     }
 
     @Test
-    public void shouldUpdatePersonnelAndReturnUpdatedPersonnelDto() {
-        PersonnelDto personnelDto = PersonnelDto.builder().id("testId").build();
-        String organizationId = "testOrgId";
-        PersonnelDto updatedPersonnel = PersonnelDto.builder().id("testId").build();
-        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
-        when(personnelService.updatePersonnel(personnelDto)).thenReturn(true);
-        when(personnelService.findById(personnelDto.getId())).thenReturn(updatedPersonnel);
+    public void shouldUpdatePersonnelWhenValidPutRequest() {
+        // Arrange
+        request.addHeader("Authorization", "Bearer token");
+        PersonnelDto personnelDto = new PersonnelDto();
+        personnelDto.setId("pers123");
+        personnelDto.setOrganizationId("org123");
+        when(personnelService.updatePersonnel(any(PersonnelDto.class))).thenReturn(true);
+        when(personnelService.findById("pers123")).thenReturn(personnelDto);
 
+        // Act
         PersonnelDto result = personnelController.updatePersonnel(request, personnelDto);
 
-        assertEquals(updatedPersonnel, result);
+        // Assert
+        assertEquals(personnelDto, result);
+        verify(personnelService).updatePersonnel(personnelDto);
+        verify(personnelService).findById("pers123");
     }
 
     @Test
-    public void shouldDeletePersonnel() {
-        String id = "testId";
+    public void shouldDeletePersonnelWhenValidId() {
+        // Arrange
+        String personnelId = "pers123";
 
-        personnelController.deletePersonnel(id);
+        // Act
+        personnelController.deletePersonnel(personnelId);
 
-        Mockito.verify(personnelService).deletePersonnel(id);
+        // Assert
+        verify(personnelService).deletePersonnel(personnelId);
     }
 
     @Test
-    public void shouldReturnPersonnelDisplayWhenGetAllPersonnelByFilter() {
-        String organizationId = "testOrgId";
-        PersonnelDisplay expectedDisplay = PersonnelDisplay.builder().build();
-        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
-        when(personnelService.findbyValue(eq(organizationId), anyString(), anyString(), anyString(), anyInt(), anyInt())).thenReturn(expectedDisplay);
+    public void shouldReturnFilteredPersonnelWhenGetAllPersonnelByFilter() {
+        // Arrange
+        String organizationId = "org123";
+        request.addHeader("Authorization", "Bearer token");
+        when(personnelService.findbyValue(any(String.class), any(String.class), any(String.class), any(String.class), anyInt(), anyInt()))
+                .thenReturn(new PersonnelDisplay());
 
-        PersonnelDisplay result = personnelController.getAllPersonnelByFilter(request, 0, 10, "", "", "");
+        // Act
+        PersonnelDisplay result = personnelController.getAllPersonnelByFilter(request, 0, 10, "John", "district123", "Engineer");
 
-        assertEquals(expectedDisplay, result);
+        // Assert
+        assertEquals(new PersonnelDisplay(), result);
+        verify(personnelService).findbyValue(organizationId, "John", "district123", "Engineer", 0, 10);
     }
 }
