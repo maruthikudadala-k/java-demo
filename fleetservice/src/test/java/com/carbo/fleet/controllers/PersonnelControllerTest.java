@@ -12,12 +12,13 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mock.web.MockHttpServletRequest;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class PersonnelControllerTest {
@@ -25,100 +26,93 @@ public class PersonnelControllerTest {
     @Mock
     private PersonnelService personnelService;
 
+    @Mock
+    private HttpServletRequest request;
+
     @InjectMocks
     private PersonnelController personnelController;
 
     @Test
-    public void shouldReturnAllPersonnelWhenGetAllPersonnelCalled() {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setUserPrincipal(() -> "user");
-        PersonnelDisplay expectedDisplay = PersonnelDisplay.builder()
-                .personnelDisplayObject(Collections.emptyList())
-                .totalCount(0L)
-                .build();
+    public void shouldReturnPersonnelDisplayWhenGetAllPersonnel() {
+        String organizationId = "testOrgId";
+        PersonnelDisplay expectedDisplay = PersonnelDisplay.builder().build();
+        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
+        when(personnelService.findAll(eq(organizationId), anyInt(), anyInt())).thenReturn(expectedDisplay);
 
-        Mockito.when(personnelService.findAll(Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt())).thenReturn(expectedDisplay);
+        PersonnelDisplay result = personnelController.getAllPersonnel(request, 0, 10);
 
-        PersonnelDisplay actualDisplay = personnelController.getAllPersonnel(request, 0, 10);
-
-        assertNotNull(actualDisplay);
-        assertEquals(expectedDisplay, actualDisplay);
+        assertEquals(expectedDisplay, result);
     }
 
     @Test
-    public void shouldReturnPersonnelWhenGetPersonnelCalled() {
-        String personnelId = "1";
-        PersonnelDto expectedDto = new PersonnelDto();
-        expectedDto.setId(personnelId);
+    public void shouldReturnPersonnelDtoWhenGetPersonnel() {
+        String id = "testId";
+        PersonnelDto expectedPersonnel = PersonnelDto.builder().id(id).build();
+        when(personnelService.findById(id)).thenReturn(expectedPersonnel);
 
-        Mockito.when(personnelService.findById(personnelId)).thenReturn(expectedDto);
+        PersonnelDto result = personnelController.getPersonnel(request, id);
 
-        PersonnelDto actualDto = personnelController.getPersonnel(new MockHttpServletRequest(), personnelId);
-
-        assertNotNull(actualDto);
-        assertEquals(expectedDto.getId(), actualDto.getId());
+        assertEquals(expectedPersonnel, result);
     }
 
     @Test
-    public void shouldCreatePersonnelWhenCreatePersonnelCalled() {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setUserPrincipal(() -> "user");
-        PersonnelDto personnelDto = new PersonnelDto();
-        personnelDto.setFirstName("John");
-        personnelDto.setSecondName("Doe");
-        personnelDto.setJobTitle("Engineer");
-        personnelDto.setEmployeeId("E123");
-        personnelDto.setSupervisor(true);
-        personnelDto.setDistrictId("D1");
-        personnelDto.setFleetId("F1");
-        personnelDto.setCrewId("C1");
-
-        Mockito.when(personnelService.savePersonnel(personnelDto)).thenReturn(true);
+    public void shouldCreatePersonnelAndReturnCreatedResponse() {
+        PersonnelDto personnelDto = PersonnelDto.builder().build();
+        String organizationId = "testOrgId";
+        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
+        when(personnelService.savePersonnel(personnelDto)).thenReturn(true);
 
         ResponseEntity<Object> response = personnelController.createPersonnel(request, personnelDto);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals("personnel_created", ((ResponseEntity<?>) response).getBody().get("successMessage"));
     }
 
     @Test
-    public void shouldUpdatePersonnelWhenUpdatePersonnelCalled() {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setUserPrincipal(() -> "user");
-        PersonnelDto personnelDto = new PersonnelDto();
-        personnelDto.setId("1");
+    public void shouldReturnConflictResponseWhenPersonnelAlreadyExists() {
+        PersonnelDto personnelDto = PersonnelDto.builder().build();
+        String organizationId = "testOrgId";
+        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
+        when(personnelService.savePersonnel(personnelDto)).thenReturn(false);
 
-        Mockito.when(personnelService.updatePersonnel(personnelDto)).thenReturn(true);
-        Mockito.when(personnelService.findById(personnelDto.getId())).thenReturn(personnelDto);
+        ResponseEntity<Object> response = personnelController.createPersonnel(request, personnelDto);
 
-        PersonnelDto actualDto = personnelController.updatePersonnel(request, personnelDto);
-
-        assertNotNull(actualDto);
-        assertEquals(personnelDto.getId(), actualDto.getId());
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals("Personnel already exists", ((ResponseEntity<?>) response).getBody().get("errorMessage"));
     }
 
     @Test
-    public void shouldDeletePersonnelWhenDeletePersonnelCalled() {
-        String personnelId = "1";
+    public void shouldUpdatePersonnelAndReturnUpdatedPersonnelDto() {
+        PersonnelDto personnelDto = PersonnelDto.builder().id("testId").build();
+        String organizationId = "testOrgId";
+        PersonnelDto updatedPersonnel = PersonnelDto.builder().id("testId").build();
+        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
+        when(personnelService.updatePersonnel(personnelDto)).thenReturn(true);
+        when(personnelService.findById(personnelDto.getId())).thenReturn(updatedPersonnel);
 
-        personnelController.deletePersonnel(personnelId);
+        PersonnelDto result = personnelController.updatePersonnel(request, personnelDto);
 
-        Mockito.verify(personnelService, Mockito.times(1)).deletePersonnel(personnelId);
+        assertEquals(updatedPersonnel, result);
     }
 
     @Test
-    public void shouldReturnFilteredPersonnelWhenGetAllPersonnelByFilterCalled() {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setUserPrincipal(() -> "user");
-        PersonnelDisplay expectedDisplay = PersonnelDisplay.builder()
-                .personnelDisplayObject(Collections.emptyList())
-                .totalCount(0L)
-                .build();
+    public void shouldDeletePersonnel() {
+        String id = "testId";
 
-        Mockito.when(personnelService.findbyValue(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyInt(), Mockito.anyInt())).thenReturn(expectedDisplay);
+        personnelController.deletePersonnel(id);
 
-        PersonnelDisplay actualDisplay = personnelController.getAllPersonnelByFilter(request, 0, 10, "", "", "");
+        Mockito.verify(personnelService).deletePersonnel(id);
+    }
 
-        assertNotNull(actualDisplay);
-        assertEquals(expectedDisplay, actualDisplay);
+    @Test
+    public void shouldReturnPersonnelDisplayWhenGetAllPersonnelByFilter() {
+        String organizationId = "testOrgId";
+        PersonnelDisplay expectedDisplay = PersonnelDisplay.builder().build();
+        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
+        when(personnelService.findbyValue(eq(organizationId), anyString(), anyString(), anyString(), anyInt(), anyInt())).thenReturn(expectedDisplay);
+
+        PersonnelDisplay result = personnelController.getAllPersonnelByFilter(request, 0, 10, "", "", "");
+
+        assertEquals(expectedDisplay, result);
     }
 }

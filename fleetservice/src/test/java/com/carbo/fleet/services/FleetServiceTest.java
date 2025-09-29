@@ -13,18 +13,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class FleetServiceTest {
+public class FleetServiceTest {
 
     @Mock
     private FleetMongoDbRepository fleetRepository;
@@ -35,65 +34,126 @@ class FleetServiceTest {
     @Mock
     private JobMongoDbRepository jobMongoDbRepository;
 
-    @InjectMocks
-    private FleetService fleetService;
-
     @Mock
     private HttpServletRequest request;
 
+    @InjectMocks
+    private FleetService fleetService;
+
     @Test
-    void shouldReturnFleetDataWhenValidRequest() {
-        // Arrange
-        String organizationId = "org-123";
-        String jobId = "job-1";
-        Job job = new Job();
-        job.setId(jobId);
-        job.setFleet("Fleet A");
-        job.setOrganizationId(organizationId);
+    public void shouldReturnAllFleetsWhenGetAllIsCalled() {
+        List<Fleet> fleets = Collections.singletonList(new Fleet());
+        when(fleetRepository.findAll()).thenReturn(fleets);
 
-        List<Job> jobList = Arrays.asList(job);
-        when(jobMongoDbRepository.findBySharedWithOrganizationIdAndStatus(organizationId, "In Progress"))
-                .thenReturn(jobList);
-        
-        Fleet fleet = new Fleet();
-        fleet.setId("fleet-1");
-        fleet.setName("Fleet A");
-        fleet.setOrganizationId(organizationId);
-        
-        when(fleetRepository.findByOrganizationIdInAndNameIn(Set.of(organizationId), Set.of("Fleet A")))
-                .thenReturn(Arrays.asList(fleet));
+        List<Fleet> result = fleetService.getAll();
 
-        OnSiteEquipment equipment = new OnSiteEquipment();
-        equipment.setFleetId(fleet.getId());
-        equipment.setType("pumps");
-        equipment.setDuelFuel(true);
-        
-        when(onSiteEquipmentMongoDbRepository.findByFleetIdIn(Set.of(fleet.getId())))
-                .thenReturn(Collections.singletonList(equipment));
-
-        when(request.getUserPrincipal()).thenReturn(() -> "principal");
-
-        // Act
-        ResponseEntity<?> responseEntity = fleetService.getFleetData(request);
-
-        // Assert
-        assertEquals(200, responseEntity.getStatusCodeValue());
-        assertEquals(Map.class, responseEntity.getBody().getClass());
+        assertEquals(fleets, result);
+        verify(fleetRepository, times(1)).findAll();
     }
 
     @Test
-    void shouldReturnErrorResponseWhenExceptionOccurs() {
-        // Arrange
-        when(jobMongoDbRepository.findBySharedWithOrganizationIdAndStatus(Mockito.anyString(), Mockito.anyString()))
-                .thenThrow(new RuntimeException("Database error"));
+    public void shouldReturnFleetsByOrganizationIdWhenGetByOrganizationIdIsCalled() {
+        String organizationId = "org123";
+        List<Fleet> fleets = Collections.singletonList(new Fleet());
+        when(fleetRepository.findByOrganizationId(organizationId)).thenReturn(fleets);
 
-        // Act
-        ResponseEntity<?> responseEntity = fleetService.getFleetData(request);
+        List<Fleet> result = fleetService.getByOrganizationId(organizationId);
 
-        // Assert
-        assertEquals(500, responseEntity.getStatusCodeValue());
-        Error error = (Error) responseEntity.getBody();
-        assertEquals(Constants.UNABLE_TO_FETCH_DATA_CODE, error.getErrorCode());
-        assertEquals(Constants.UNABLE_TO_FETCH_DATA_MESSAGE, error.getErrorMessage());
+        assertEquals(fleets, result);
+        verify(fleetRepository, times(1)).findByOrganizationId(organizationId);
+    }
+
+    @Test
+    public void shouldSaveFleetWhenSaveFleetIsCalled() {
+        Fleet fleet = new Fleet();
+        when(fleetRepository.save(fleet)).thenReturn(fleet);
+
+        Fleet result = fleetService.saveFleet(fleet);
+
+        assertEquals(fleet, result);
+        verify(fleetRepository, times(1)).save(fleet);
+    }
+
+    @Test
+    public void shouldUpdateFleetWhenUpdateFleetIsCalled() {
+        Fleet fleet = new Fleet();
+        doNothing().when(fleetRepository).save(fleet);
+
+        fleetService.updateFleet(fleet);
+
+        verify(fleetRepository, times(1)).save(fleet);
+    }
+
+    @Test
+    public void shouldDeleteFleetWhenDeleteFleetIsCalled() {
+        String fleetId = "fleetId";
+        doNothing().when(fleetRepository).deleteById(fleetId);
+
+        fleetService.deleteFleet(fleetId);
+
+        verify(fleetRepository, times(1)).deleteById(fleetId);
+    }
+
+    @Test
+    public void shouldReturnDistinctFleetWhenFindDistinctByOrganizationIdAndNameIsCalled() {
+        String organizationId = "org123";
+        String name = "FleetName";
+        Fleet fleet = new Fleet();
+        Optional<Fleet> optionalFleet = Optional.of(fleet);
+        when(fleetRepository.findDistinctByOrganizationIdAndName(organizationId, name)).thenReturn(optionalFleet);
+
+        Optional<Fleet> result = fleetService.findDistinctByOrganizationIdAndName(organizationId, name);
+
+        assertEquals(optionalFleet, result);
+        verify(fleetRepository, times(1)).findDistinctByOrganizationIdAndName(organizationId, name);
+    }
+
+    @Test
+    public void shouldReturnFleetDataWhenGetFleetDataIsCalled() {
+        // Setup mock behavior for the job repository
+        String organizationId = "org123";
+        Job job = new Job();
+        job.setFleet("Fleet1");
+        job.setOrganizationId("org123");
+        job.setId("job1");
+        List<Job> jobList = Collections.singletonList(job);
+        when(jobMongoDbRepository.findBySharedWithOrganizationIdAndStatus(organizationId, "In Progress"))
+                .thenReturn(jobList);
+
+        // Setup mock behavior for fleet repository
+        Fleet fleet = new Fleet();
+        fleet.setId("fleet1");
+        fleet.setName("Fleet1");
+        fleet.setOrganizationId("org123");
+        List<Fleet> fleetLists = Collections.singletonList(fleet);
+        when(fleetRepository.findByOrganizationIdInAndNameIn(anySet(), anySet())).thenReturn(fleetLists);
+
+        // Add mock for onSiteEquipment repository
+        OnSiteEquipment equipment = new OnSiteEquipment();
+        equipment.setFleetId("fleet1");
+        equipment.setDuelFuel(true);
+        equipment.setType("pumps");
+        List<OnSiteEquipment> equipmentList = Collections.singletonList(equipment);
+        when(onSiteEquipmentMongoDbRepository.findByFleetIdIn(anySet())).thenReturn(equipmentList);
+
+        // Call the method under test
+        ResponseEntity result = fleetService.getFleetData(request);
+
+        // Validate the result
+        assertEquals(200, result.getStatusCodeValue());
+    }
+
+    @Test
+    public void shouldReturnErrorWhenGetFleetDataThrowsException() {
+        when(request.getUserPrincipal()).thenThrow(new RuntimeException("Error"));
+
+        ResponseEntity result = fleetService.getFleetData(request);
+
+        assertEquals(500, result.getStatusCodeValue());
+        Error expectedError = Error.builder()
+                .errorCode("UNABLE_TO_FETCH_DATA")
+                .errorMessage("unable to fetch data")
+                .build();
+        assertEquals(expectedError, result.getBody());
     }
 }

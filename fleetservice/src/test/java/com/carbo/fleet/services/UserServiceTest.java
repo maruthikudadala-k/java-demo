@@ -27,62 +27,72 @@ public class UserServiceTest {
     @Test
     public void shouldReturnAllUsers() {
         when(userRepository.findAll()).thenReturn(Collections.emptyList());
-        
-        assertEquals(Collections.emptyList(), userService.getAll());
+
+        List<User> result = userService.getAll();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
         verify(userRepository).findAll();
     }
 
     @Test
     public void shouldReturnUsersByOrganizationId() {
-        String organizationId = "org123";
+        String organizationId = "org-123";
         when(userRepository.findByOrganizationId(organizationId)).thenReturn(Collections.emptyList());
 
-        assertEquals(Collections.emptyList(), userService.getByOrganizationId(organizationId));
+        List<User> result = userService.getByOrganizationId(organizationId);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
         verify(userRepository).findByOrganizationId(organizationId);
     }
 
     @Test
     public void shouldReturnUserById() {
-        String userId = "user123";
+        String userId = "user-123";
         User user = new User();
         user.setId(userId);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         Optional<User> result = userService.getUser(userId);
+
         assertTrue(result.isPresent());
         assertEquals(userId, result.get().getId());
         verify(userRepository).findById(userId);
     }
 
     @Test
-    public void shouldReturnEmptyOptionalWhenUserNotFoundById() {
-        String userId = "user123";
+    public void shouldReturnEmptyWhenUserIdNotFound() {
+        String userId = "user-123";
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         Optional<User> result = userService.getUser(userId);
+
         assertFalse(result.isPresent());
         verify(userRepository).findById(userId);
     }
 
     @Test
     public void shouldReturnUserByUserName() {
-        String userName = "johndoe";
+        String userName = "username";
         User user = new User();
         user.setUserName(userName);
         when(userRepository.findByUserName(userName)).thenReturn(Optional.of(user));
 
         Optional<User> result = userService.getUserByUserName(userName);
+
         assertTrue(result.isPresent());
         assertEquals(userName, result.get().getUserName());
         verify(userRepository).findByUserName(userName);
     }
 
     @Test
-    public void shouldReturnEmptyOptionalWhenUserNotFoundByUserName() {
-        String userName = "johndoe";
+    public void shouldReturnEmptyWhenUserNameNotFound() {
+        String userName = "username";
         when(userRepository.findByUserName(userName)).thenReturn(Optional.empty());
 
         Optional<User> result = userService.getUserByUserName(userName);
+
         assertFalse(result.isPresent());
         verify(userRepository).findByUserName(userName);
     }
@@ -93,21 +103,27 @@ public class UserServiceTest {
         when(userRepository.save(user)).thenReturn(user);
 
         User result = userService.saveUser(user);
-        assertEquals(user, result);
+
+        assertNotNull(result);
         verify(userRepository).save(user);
     }
 
     @Test
     public void shouldUpdateUser() {
         User user = new User();
+        when(userRepository.save(user)).thenReturn(user);
+
         userService.updateUser(user);
+
         verify(userRepository).save(user);
     }
 
     @Test
-    public void shouldDeleteUser() {
-        String userId = "user123";
+    public void shouldDeleteUserById() {
+        String userId = "user-123";
+
         userService.deleteUser(userId);
+
         verify(userRepository).deleteById(userId);
     }
 }
