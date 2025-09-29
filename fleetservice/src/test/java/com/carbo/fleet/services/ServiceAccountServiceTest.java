@@ -26,56 +26,89 @@ public class ServiceAccountServiceTest {
 
     @Test
     public void shouldReturnAllServiceAccounts() {
-        when(serviceAccountMongoDbRepository.findAll()).thenReturn(Collections.emptyList());
+        // Arrange
+        ServiceAccount serviceAccount = new ServiceAccount();
+        when(serviceAccountMongoDbRepository.findAll()).thenReturn(Collections.singletonList(serviceAccount));
 
-        assertEquals(Collections.emptyList(), serviceAccountService.getAll());
-        verify(serviceAccountMongoDbRepository).findAll();
+        // Act
+        List<ServiceAccount> result = serviceAccountService.getAll();
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(serviceAccount, result.get(0));
+        verify(serviceAccountMongoDbRepository, times(1)).findAll();
     }
 
     @Test
     public void shouldReturnServiceAccountsByOrganizationId() {
+        // Arrange
         String organizationId = "org123";
-        when(serviceAccountMongoDbRepository.findByOrganizationId(organizationId)).thenReturn(Collections.emptyList());
+        ServiceAccount serviceAccount = new ServiceAccount();
+        when(serviceAccountMongoDbRepository.findByOrganizationId(organizationId)).thenReturn(Collections.singletonList(serviceAccount));
 
-        assertEquals(Collections.emptyList(), serviceAccountService.getByOrganizationId(organizationId));
-        verify(serviceAccountMongoDbRepository).findByOrganizationId(organizationId);
+        // Act
+        List<ServiceAccount> result = serviceAccountService.getByOrganizationId(organizationId);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(serviceAccount, result.get(0));
+        verify(serviceAccountMongoDbRepository, times(1)).findByOrganizationId(organizationId);
     }
 
     @Test
     public void shouldReturnServiceAccountById() {
-        String serviceAccountId = "sa123";
+        // Arrange
+        String serviceAccountId = "account123";
         ServiceAccount serviceAccount = new ServiceAccount();
         when(serviceAccountMongoDbRepository.findById(serviceAccountId)).thenReturn(Optional.of(serviceAccount));
 
+        // Act
         Optional<ServiceAccount> result = serviceAccountService.get(serviceAccountId);
+
+        // Assert
         assertTrue(result.isPresent());
         assertEquals(serviceAccount, result.get());
-        verify(serviceAccountMongoDbRepository).findById(serviceAccountId);
+        verify(serviceAccountMongoDbRepository, times(1)).findById(serviceAccountId);
     }
 
     @Test
     public void shouldSaveServiceAccount() {
+        // Arrange
         ServiceAccount serviceAccount = new ServiceAccount();
         when(serviceAccountMongoDbRepository.save(serviceAccount)).thenReturn(serviceAccount);
 
+        // Act
         ServiceAccount result = serviceAccountService.save(serviceAccount);
+
+        // Assert
         assertEquals(serviceAccount, result);
-        verify(serviceAccountMongoDbRepository).save(serviceAccount);
+        verify(serviceAccountMongoDbRepository, times(1)).save(serviceAccount);
     }
 
     @Test
     public void shouldUpdateServiceAccount() {
+        // Arrange
         ServiceAccount serviceAccount = new ServiceAccount();
+        when(serviceAccountMongoDbRepository.save(serviceAccount)).thenReturn(serviceAccount);
+
+        // Act
         serviceAccountService.update(serviceAccount);
 
-        verify(serviceAccountMongoDbRepository).save(serviceAccount);
+        // Assert
+        verify(serviceAccountMongoDbRepository, times(1)).save(serviceAccount);
     }
 
     @Test
     public void shouldDeleteServiceAccountById() {
-        String serviceAccountId = "sa123";
+        // Arrange
+        String serviceAccountId = "account123";
+
+        // Act
         serviceAccountService.delete(serviceAccountId);
 
-        verify(serviceAccountMongoDbRepository).deleteById(serviceAccountId);
+        // Assert
+        verify(serviceAccountMongoDbRepository, times(1)).deleteById(serviceAccountId);
     }
 }

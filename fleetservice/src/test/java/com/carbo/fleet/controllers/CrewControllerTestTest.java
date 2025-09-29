@@ -26,6 +26,11 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.MockitoJUnit5;
+
+@ExtendWith(MockitoJUnit5.class)
 class CrewControllerTest {
 
     private MockMvc mockMvc;
@@ -38,8 +43,9 @@ class CrewControllerTest {
 
     private ObjectMapper objectMapper;
 
+    @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        MockitoAnnotations.initMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         objectMapper = new ObjectMapper();
     }

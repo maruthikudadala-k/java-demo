@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -26,7 +26,7 @@ public class UserServiceTest {
     private UserService userService;
 
     @Test
-    public void shouldReturnAllUsers() {
+    public void shouldReturnAllUsersWhenGetAllIsCalled() {
         // Arrange
         when(userRepository.findAll()).thenReturn(Collections.emptyList());
 
@@ -39,7 +39,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldReturnUsersByOrganizationId() {
+    public void shouldReturnUsersWhenGetByOrganizationIdIsCalled() {
         // Arrange
         String organizationId = "org123";
         when(userRepository.findByOrganizationId(organizationId)).thenReturn(Collections.emptyList());
@@ -53,55 +53,58 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldReturnUserById() {
+    public void shouldReturnUserWhenGetUserIsCalled() {
         // Arrange
         String userId = "user123";
         User user = new User();
+        user.setId(userId);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         // Act
-        Optional<User> foundUser = userService.getUser(userId);
+        Optional<User> result = userService.getUser(userId);
 
         // Assert
-        assertTrue(foundUser.isPresent());
-        assertEquals(user, foundUser.get());
+        assertTrue(result.isPresent());
+        assertEquals(userId, result.get().getId());
         verify(userRepository, times(1)).findById(userId);
     }
 
     @Test
-    public void shouldReturnUserByUserName() {
+    public void shouldReturnUserWhenGetUserByUserNameIsCalled() {
         // Arrange
-        String userName = "userName123";
+        String userName = "testUser";
         User user = new User();
+        user.setUserName(userName);
         when(userRepository.findByUserName(userName)).thenReturn(Optional.of(user));
 
         // Act
-        Optional<User> foundUser = userService.getUserByUserName(userName);
+        Optional<User> result = userService.getUserByUserName(userName);
 
         // Assert
-        assertTrue(foundUser.isPresent());
-        assertEquals(user, foundUser.get());
+        assertTrue(result.isPresent());
+        assertEquals(userName, result.get().getUserName());
         verify(userRepository, times(1)).findByUserName(userName);
     }
 
     @Test
-    public void shouldSaveUser() {
+    public void shouldSaveUserWhenSaveUserIsCalled() {
         // Arrange
         User user = new User();
         when(userRepository.save(user)).thenReturn(user);
 
         // Act
-        User savedUser = userService.saveUser(user);
+        User result = userService.saveUser(user);
 
         // Assert
-        assertEquals(user, savedUser);
+        assertEquals(user, result);
         verify(userRepository, times(1)).save(user);
     }
 
     @Test
-    public void shouldUpdateUser() {
+    public void shouldUpdateUserWhenUpdateUserIsCalled() {
         // Arrange
         User user = new User();
+        when(userRepository.save(user)).thenReturn(user);
 
         // Act
         userService.updateUser(user);
@@ -111,7 +114,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldDeleteUser() {
+    public void shouldDeleteUserWhenDeleteUserIsCalled() {
         // Arrange
         String userId = "user123";
 
