@@ -215,7 +215,7 @@ public class PersonnelService {
 
         UnwindOperation unwindsupervisorInfo = Aggregation.unwind("supervisorInfo", true);
 
-        ProjectionOperation project = Aggregation.project()
+        ProjectionOperation project = Aggregation.java_springboot-master()
                 .and("fleet.name").as("fleetName")
                 .and("district.name").as("districtName")
                 .and("crew.name").as("crewName")
