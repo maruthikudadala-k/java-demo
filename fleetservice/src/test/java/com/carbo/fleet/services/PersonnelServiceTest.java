@@ -10,14 +10,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoExtension;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.domain.Pageable;
 
 import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,112 +35,134 @@ public class PersonnelServiceTest {
 
     @Test
     public void shouldReturnPersonnelDisplayWhenFindAll() {
-        // Given
-        String organizationId = "orgId";
-        int offSet = 0;
-        int limit = 10;
+        // Arrange
+        String organizationId = "org123";
         PersonnelDisplay expectedDisplay = PersonnelDisplay.builder()
                 .personnelDisplayObject(Collections.emptyList())
                 .totalCount(0L)
                 .build();
 
-        when(mongoTemplate.aggregate(any(), eq("personnel"), eq(PersonnelDto.class)))
-                .thenReturn(new AggregationResults<>(Collections.emptyList(), new TotalCountObject(0L)));
+        when(mongoTemplate.aggregate(any(), anyString(), eq(PersonnelDto.class))).thenReturn(new org.springframework.data.mongodb.core.AggregationResults<>(Collections.emptyList(), null));
+        when(mongoTemplate.aggregate(any(), anyString(), eq(TotalCountObject.class))).thenReturn(new org.springframework.data.mongodb.core.AggregationResults<>(Collections.singletonList(new TotalCountObject(0L)), null));
 
-        // When
-        PersonnelDisplay result = personnelService.findAll(organizationId, offSet, limit);
+        // Act
+        PersonnelDisplay result = personnelService.findAll(organizationId, 0, 10);
 
-        // Then
+        // Assert
         assertNotNull(result);
         assertEquals(expectedDisplay.getTotalCount(), result.getTotalCount());
+        verify(mongoTemplate, times(1)).aggregate(any(), anyString(), eq(PersonnelDto.class));
     }
 
     @Test
-    public void shouldReturnTrueWhenSavePersonnel() {
-        // Given
+    public void shouldSavePersonnelSuccessfully() {
+        // Arrange
         PersonnelDto dto = PersonnelDto.builder()
-                .crewId("crewId")
-                .employeeId("employeeId")
+                .crewId("crew123")
+                .employeeId("emp123")
                 .firstName("John")
-                .districtId("districtId")
+                .districtId("dist123")
                 .jobTitle("Developer")
-                .fleetId("fleetId")
+                .fleetId("fleet123")
                 .secondName("Doe")
                 .supervisor(true)
-                .organizationId("orgId")
+                .organizationId("org123")
                 .build();
 
-        Personnel createdPersonnel = Personnel.builder().id("newId").build();
+        Personnel createdPersonnel = Personnel.builder()
+                .id("newId")
+                .crewId(dto.getCrewId())
+                .employeeId(dto.getEmployeeId())
+                .firstName(dto.getFirstName())
+                .districtId(dto.getDistrictId())
+                .jobTitle(dto.getJobTitle())
+                .fleetId(dto.getFleetId())
+                .secondName(dto.getSecondName())
+                .supervisor(dto.getSupervisor())
+                .organizationId(dto.getOrganizationId())
+                .build();
+
         when(personnelDBRepository.save(any(Personnel.class))).thenReturn(createdPersonnel);
-        
-        // When
+
+        // Act
         Boolean result = personnelService.savePersonnel(dto);
 
-        // Then
+        // Assert
         assertTrue(result);
-        verify(personnelDBRepository, times(1)).save(any(Personnel.class));
+        verify(personnelDBRepository, times(2)).save(any(Personnel.class));
     }
 
     @Test
-    public void shouldReturnTrueWhenUpdatePersonnel() {
-        // Given
+    public void shouldReturnFalseWhenSavePersonnelWithDuplicateKey() {
+        // Arrange
         PersonnelDto dto = PersonnelDto.builder()
-                .id("existingId")
-                .crewId("crewId")
-                .employeeId("employeeId")
+                .crewId("crew123")
+                .employeeId("emp123")
                 .firstName("John")
-                .districtId("districtId")
+                .districtId("dist123")
                 .jobTitle("Developer")
-                .fleetId("fleetId")
+                .fleetId("fleet123")
                 .secondName("Doe")
                 .supervisor(true)
-                .supervisorId("supervisorId")
-                .organizationId("orgId")
+                .organizationId("org123")
                 .build();
-        
-        Personnel existingPersonnel = Personnel.builder().id("existingId").build();
-        when(personnelDBRepository.findById("existingId")).thenReturn(Optional.of(existingPersonnel));
 
-        // When
-        Boolean result = personnelService.updatePersonnel(dto);
+        when(personnelDBRepository.save(any(Personnel.class))).thenThrow(new DuplicateKeyException("Duplicate key"));
 
-        // Then
-        assertTrue(result);
+        // Act
+        Boolean result = personnelService.savePersonnel(dto);
+
+        // Assert
+        assertFalse(result);
         verify(personnelDBRepository, times(1)).save(any(Personnel.class));
     }
 
     @Test
     public void shouldReturnPersonnelDtoWhenFindById() {
-        // Given
-        String id = "existingId";
-        PersonnelDto expectedDto = PersonnelDto.builder().id(id).firstName("John").secondName("Doe").build();
+        // Arrange
+        String id = "personnelId";
+        PersonnelDto expectedDto = PersonnelDto.builder().build();
         PersonnelDisplay display = PersonnelDisplay.builder()
                 .personnelDisplayObject(Collections.singletonList(expectedDto))
                 .totalCount(1L)
                 .build();
-        
-        when(mongoTemplate.aggregate(any(), eq("personnel"), eq(PersonnelDto.class)))
-                .thenReturn(new AggregationResults<>(Collections.singletonList(expectedDto), new TotalCountObject(1L)));
 
-        // When
+        when(personnelService.lookUpPersonnel(any(), any(), any(), any(), any(), anyInt(), anyInt())).thenReturn(display);
+
+        // Act
         PersonnelDto result = personnelService.findById(id);
 
-        // Then
+        // Assert
         assertNotNull(result);
-        assertEquals(expectedDto.getId(), result.getId());
+        assertEquals(expectedDto, result);
     }
 
     @Test
-    public void shouldDeletePersonnelWhenExists() {
-        // Given
-        String id = "existingId";
+    public void shouldDeletePersonnelSuccessfully() {
+        // Arrange
+        String id = "personnelId";
         Personnel personnel = Personnel.builder().id(id).build();
+
         when(personnelDBRepository.findById(id)).thenReturn(Optional.of(personnel));
 
-        // When
+        // Act
         personnelService.deletePersonnel(id);
 
-        // Then
+        // Assert
         verify(personnelDBRepository, times(1)).deleteById(id);
+    }
+
+    @Test
+    public void shouldNotDeletePersonnelWhenNotFound() {
+        // Arrange
+        String id = "nonExistingId";
+
+        when(personnelDBRepository.findById(id)).thenReturn(Optional.empty());
+
+        // Act
+        personnelService.deletePersonnel(id);
+
+        // Assert
+        verify(personnelDBRepository, never()).deleteById(anyString());
     }
 }

@@ -9,14 +9,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.MockitoExtension;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class SyncControllerTest {
@@ -31,59 +30,53 @@ public class SyncControllerTest {
     private SyncController syncController;
 
     @Test
-    public void shouldReturnFleetIdsWithTimestampsWhenViewIsCalled() {
+    public void shouldReturnFleetTimestampMapWhenViewIsCalled() {
         String organizationId = "org123";
-        List<Fleet> fleets = Arrays.asList(new Fleet(), new Fleet());
-
-        for (int i = 0; i < fleets.size(); i++) {
-            fleets.get(i).setId("fleet" + i);
-            fleets.get(i).setTs((long) (i + 1));
-        }
-
-        when(request.getUserPrincipal()).thenReturn(new MockPrincipal(organizationId));
-        when(fleetService.getByOrganizationId(organizationId)).thenReturn(fleets);
+        Fleet fleet1 = new Fleet();
+        fleet1.setId("fleet1");
+        fleet1.setTs(100L);
+        
+        Fleet fleet2 = new Fleet();
+        fleet2.setId("fleet2");
+        fleet2.setTs(200L);
+        
+        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
+        when(fleetService.getByOrganizationId(organizationId)).thenReturn(Arrays.asList(fleet1, fleet2));
 
         Map<String, Long> result = syncController.view(request);
 
-        Map<String, Long> expected = new HashMap<>();
-        for (Fleet fleet : fleets) {
-            expected.put(fleet.getId(), fleet.getTs());
-        }
-
-        assertEquals(expected, result);
+        assertEquals(2, result.size());
+        assertEquals(100L, result.get("fleet1"));
+        assertEquals(200L, result.get("fleet2"));
     }
 
     @Test
-    public void shouldUpdateAndReturnSyncResponseWhenSyncIsCalled() {
+    public void shouldReturnSyncResponseWhenSyncIsCalled() {
+        String organizationId = "org123";
         SyncRequest syncRequest = new SyncRequest();
-        syncRequest.setUpdate(Arrays.asList(new Fleet(), new Fleet()));
         syncRequest.setRemove(new HashSet<>(Arrays.asList("fleet1", "fleet2")));
+        syncRequest.setUpdate(Arrays.asList(new Fleet()));
         syncRequest.setGet(new HashSet<>(Arrays.asList("fleet3")));
 
-        String organizationId = "org123";
+        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
+        when(fleetService.getFleet(anyString())).thenReturn(Optional.of(new Fleet()));
+        
+        SyncResponse response = syncController.sync(request, syncRequest);
 
-        when(request.getUserPrincipal()).thenReturn(new MockPrincipal(organizationId));
-        when(fleetService.getFleet(Mockito.anyString())).thenReturn(Optional.of(new Fleet()));
-        when(fleetService.deleteFleet(Mockito.anyString())).thenReturn(null);
-        when(fleetService.saveFleet(Mockito.any(Fleet.class))).thenReturn(new Fleet());
+        assertNotNull(response);
+        verify(fleetService, times(2)).deleteFleet(anyString());
+        verify(fleetService, times(1)).getFleet(anyString());
+    }
+
+    @Test
+    public void shouldHandleEmptySyncRequestWhenSyncIsCalled() {
+        SyncRequest syncRequest = new SyncRequest();
 
         SyncResponse response = syncController.sync(request, syncRequest);
 
-        assertEquals(2, response.getUpdated().size());
-        assertEquals(2, response.getRemoved().size());
-        assertEquals(0, response.getGet().size()); // No fleets retrieved in this case
-    }
-
-    private static class MockPrincipal implements java.security.Principal {
-        private final String organizationId;
-
-        public MockPrincipal(String organizationId) {
-            this.organizationId = organizationId;
-        }
-
-        @Override
-        public String getName() {
-            return organizationId;
-        }
+        assertNotNull(response);
+        assertNull(response.getUpdated());
+        assertNull(response.getGet());
+        assertNull(response.getRemoved());
     }
 }

@@ -9,14 +9,12 @@ import com.carbo.fleet.model.PumpTypeEnum;
 import com.carbo.fleet.repository.FleetMongoDbRepository;
 import com.carbo.fleet.repository.JobMongoDbRepository;
 import com.carbo.fleet.repository.OnSiteEquipmentMongoDbRepository;
-import com.carbo.fleet.utils.Constants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.http.HttpStatus;
+import org.mockito.junit.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -25,9 +23,9 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class FleetServiceTest {
-    
+
     @Mock
     private FleetMongoDbRepository fleetRepository;
 
@@ -41,103 +39,119 @@ public class FleetServiceTest {
     private FleetService fleetService;
 
     @Test
-    public void shouldReturnAllFleets() {
-        List<Fleet> fleets = Collections.emptyList();
+    public void shouldReturnAllFleetsWhenGetAllIsCalled() {
+        Fleet fleet1 = new Fleet();
+        Fleet fleet2 = new Fleet();
+        List<Fleet> fleets = Arrays.asList(fleet1, fleet2);
+
         when(fleetRepository.findAll()).thenReturn(fleets);
 
         List<Fleet> result = fleetService.getAll();
 
-        assertEquals(fleets, result);
-        verify(fleetRepository).findAll();
+        assertEquals(2, result.size());
+        verify(fleetRepository, times(1)).findAll();
     }
 
     @Test
     public void shouldReturnFleetsByOrganizationId() {
         String organizationId = "org123";
-        List<Fleet> fleets = Collections.emptyList();
+        Fleet fleet = new Fleet();
+        List<Fleet> fleets = Collections.singletonList(fleet);
+
         when(fleetRepository.findByOrganizationId(organizationId)).thenReturn(fleets);
 
         List<Fleet> result = fleetService.getByOrganizationId(organizationId);
 
-        assertEquals(fleets, result);
-        verify(fleetRepository).findByOrganizationId(organizationId);
+        assertEquals(1, result.size());
+        verify(fleetRepository, times(1)).findByOrganizationId(organizationId);
     }
 
     @Test
-    public void shouldReturnFleetById() {
+    public void shouldReturnFleetWhenGetFleetIsCalled() {
         String fleetId = "fleet123";
-        Optional<Fleet> fleet = Optional.of(new Fleet());
-        when(fleetRepository.findById(fleetId)).thenReturn(fleet);
+        Fleet fleet = new Fleet();
+
+        when(fleetRepository.findById(fleetId)).thenReturn(Optional.of(fleet));
 
         Optional<Fleet> result = fleetService.getFleet(fleetId);
 
-        assertEquals(fleet, result);
-        verify(fleetRepository).findById(fleetId);
+        assertEquals(fleet, result.get());
+        verify(fleetRepository, times(1)).findById(fleetId);
     }
 
     @Test
-    public void shouldSaveFleet() {
+    public void shouldSaveFleetWhenSaveFleetIsCalled() {
         Fleet fleet = new Fleet();
+
         when(fleetRepository.save(fleet)).thenReturn(fleet);
 
         Fleet result = fleetService.saveFleet(fleet);
 
         assertEquals(fleet, result);
-        verify(fleetRepository).save(fleet);
+        verify(fleetRepository, times(1)).save(fleet);
     }
 
     @Test
-    public void shouldUpdateFleet() {
+    public void shouldUpdateFleetWhenUpdateFleetIsCalled() {
         Fleet fleet = new Fleet();
+
         fleetService.updateFleet(fleet);
 
-        verify(fleetRepository).save(fleet);
+        verify(fleetRepository, times(1)).save(fleet);
     }
 
     @Test
-    public void shouldDeleteFleet() {
+    public void shouldDeleteFleetWhenDeleteFleetIsCalled() {
         String fleetId = "fleet123";
+
         fleetService.deleteFleet(fleetId);
 
-        verify(fleetRepository).deleteById(fleetId);
+        verify(fleetRepository, times(1)).deleteById(fleetId);
     }
 
     @Test
-    public void shouldFindDistinctByOrganizationIdAndName() {
+    public void shouldReturnDistinctFleetByOrganizationIdAndName() {
         String organizationId = "org123";
         String name = "Fleet A";
-        Optional<Fleet> fleet = Optional.of(new Fleet());
-        when(fleetRepository.findDistinctByOrganizationIdAndName(organizationId, name)).thenReturn(fleet);
+        Fleet fleet = new Fleet();
+
+        when(fleetRepository.findDistinctByOrganizationIdAndName(organizationId, name)).thenReturn(Optional.of(fleet));
 
         Optional<Fleet> result = fleetService.findDistinctByOrganizationIdAndName(organizationId, name);
 
-        assertEquals(fleet, result);
-        verify(fleetRepository).findDistinctByOrganizationIdAndName(organizationId, name);
+        assertEquals(fleet, result.get());
+        verify(fleetRepository, times(1)).findDistinctByOrganizationIdAndName(organizationId, name);
     }
 
     @Test
-    public void shouldReturnFleetData() {
+    public void shouldReturnFleetDataWhenGetFleetDataIsCalled() {
         HttpServletRequest request = mock(HttpServletRequest.class);
         String organizationId = "org123";
-        Map<String, Map<String, Map<PumpTypeEnum, Integer>>> expectedResponse = new HashMap<>();
-        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
-        when(jobMongoDbRepository.findBySharedWithOrganizationIdAndStatus(organizationId, "In Progress")).thenReturn(Collections.emptyList());
+        Job job = new Job();
+        job.setFleet("Fleet A");
+        job.setOrganizationId(organizationId);
+        List<Job> jobList = Collections.singletonList(job);
 
-        ResponseEntity<?> response = fleetService.getFleetData(request);
-        
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(expectedResponse, response.getBody());
+        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
+        when(jobMongoDbRepository.findBySharedWithOrganizationIdAndStatus(organizationId, "In Progress")).thenReturn(jobList);
+        when(fleetRepository.findByOrganizationIdInAndNameIn(anySet(), anySet())).thenReturn(Collections.emptyList());
+        when(onSiteEquipmentMongoDbRepository.findByFleetIdIn(anySet())).thenReturn(Collections.emptyList());
+
+        ResponseEntity result = fleetService.getFleetData(request);
+
+        assertEquals(200, result.getStatusCodeValue());
+        verify(jobMongoDbRepository, times(1)).findBySharedWithOrganizationIdAndStatus(organizationId, "In Progress");
     }
 
     @Test
-    public void shouldHandleExceptionInGetFleetData() {
+    public void shouldReturnErrorResponseWhenExceptionOccursInGetFleetData() {
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getUserPrincipal()).thenThrow(new RuntimeException("Error"));
+        when(request.getUserPrincipal()).thenThrow(new RuntimeException("Test Exception"));
 
-        ResponseEntity<?> response = fleetService.getFleetData(request);
+        ResponseEntity result = fleetService.getFleetData(request);
 
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        Error error = (Error) response.getBody();
+        assertEquals(500, result.getStatusCodeValue());
+        Error error = (Error) result.getBody();
         assertEquals(Constants.UNABLE_TO_FETCH_DATA_CODE, error.getErrorCode());
         assertEquals(Constants.UNABLE_TO_FETCH_DATA_MESSAGE, error.getErrorMessage());
     }
