@@ -25,7 +25,7 @@ Your task is to generate a **self-contained, safe, and fully compilable JUnit 5 
 - ✅ Stub every used interaction explicitly.
 - ✅ Match method signatures exactly.
 - ✅ Avoid `null` return values unless handled.
-- ❌ Do not rely on Mockito's default returns or partial mocks.
+- ❌ Do not rely on Mockito’s default returns or partial mocks.
 
 ### 5️⃣ Syntax & Structure
 - ✅ Use **JUnit 5** (`org.junit.jupiter.api.*`) and **Mockito 2.x** only.

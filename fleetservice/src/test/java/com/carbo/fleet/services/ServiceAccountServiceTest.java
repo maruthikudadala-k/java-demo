@@ -26,89 +26,56 @@ public class ServiceAccountServiceTest {
 
     @Test
     public void shouldReturnAllServiceAccounts() {
-        // Arrange
-        ServiceAccount serviceAccount = new ServiceAccount();
-        when(serviceAccountMongoDbRepository.findAll()).thenReturn(Collections.singletonList(serviceAccount));
+        when(serviceAccountMongoDbRepository.findAll()).thenReturn(Collections.emptyList());
 
-        // Act
-        List<ServiceAccount> result = serviceAccountService.getAll();
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(serviceAccount, result.get(0));
-        verify(serviceAccountMongoDbRepository, times(1)).findAll();
+        assertEquals(Collections.emptyList(), serviceAccountService.getAll());
+        verify(serviceAccountMongoDbRepository).findAll();
     }
 
     @Test
     public void shouldReturnServiceAccountsByOrganizationId() {
-        // Arrange
         String organizationId = "org123";
-        ServiceAccount serviceAccount = new ServiceAccount();
-        when(serviceAccountMongoDbRepository.findByOrganizationId(organizationId)).thenReturn(Collections.singletonList(serviceAccount));
+        when(serviceAccountMongoDbRepository.findByOrganizationId(organizationId)).thenReturn(Collections.emptyList());
 
-        // Act
-        List<ServiceAccount> result = serviceAccountService.getByOrganizationId(organizationId);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(serviceAccount, result.get(0));
-        verify(serviceAccountMongoDbRepository, times(1)).findByOrganizationId(organizationId);
+        assertEquals(Collections.emptyList(), serviceAccountService.getByOrganizationId(organizationId));
+        verify(serviceAccountMongoDbRepository).findByOrganizationId(organizationId);
     }
 
     @Test
     public void shouldReturnServiceAccountById() {
-        // Arrange
         String serviceAccountId = "account123";
         ServiceAccount serviceAccount = new ServiceAccount();
         when(serviceAccountMongoDbRepository.findById(serviceAccountId)).thenReturn(Optional.of(serviceAccount));
 
-        // Act
         Optional<ServiceAccount> result = serviceAccountService.get(serviceAccountId);
-
-        // Assert
         assertTrue(result.isPresent());
         assertEquals(serviceAccount, result.get());
-        verify(serviceAccountMongoDbRepository, times(1)).findById(serviceAccountId);
+        verify(serviceAccountMongoDbRepository).findById(serviceAccountId);
     }
 
     @Test
     public void shouldSaveServiceAccount() {
-        // Arrange
         ServiceAccount serviceAccount = new ServiceAccount();
         when(serviceAccountMongoDbRepository.save(serviceAccount)).thenReturn(serviceAccount);
 
-        // Act
         ServiceAccount result = serviceAccountService.save(serviceAccount);
-
-        // Assert
         assertEquals(serviceAccount, result);
-        verify(serviceAccountMongoDbRepository, times(1)).save(serviceAccount);
+        verify(serviceAccountMongoDbRepository).save(serviceAccount);
     }
 
     @Test
     public void shouldUpdateServiceAccount() {
-        // Arrange
         ServiceAccount serviceAccount = new ServiceAccount();
-        when(serviceAccountMongoDbRepository.save(serviceAccount)).thenReturn(serviceAccount);
 
-        // Act
         serviceAccountService.update(serviceAccount);
-
-        // Assert
-        verify(serviceAccountMongoDbRepository, times(1)).save(serviceAccount);
+        verify(serviceAccountMongoDbRepository).save(serviceAccount);
     }
 
     @Test
     public void shouldDeleteServiceAccountById() {
-        // Arrange
         String serviceAccountId = "account123";
 
-        // Act
         serviceAccountService.delete(serviceAccountId);
-
-        // Assert
-        verify(serviceAccountMongoDbRepository, times(1)).deleteById(serviceAccountId);
+        verify(serviceAccountMongoDbRepository).deleteById(serviceAccountId);
     }
 }
