@@ -2,26 +2,29 @@
 package com.carbo.fleet.controllers;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.mockito.InjectMocks;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.web.servlet.MockMvc;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-
+@ExtendWith(MockitoExtension.class)
 @SpringBootTest
-@AutoConfigureMockMvc
 public class HelloControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
+    
+    @InjectMocks
+    private HelloController helloController;
 
     @Test
-    public void shouldReturnGreetingMessageWhenIndexIsCalled() throws Exception {
-        mockMvc.perform(get("/"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("Greetings from Spring Boot!"));
+    public void shouldReturnGreetingsMessageWhenIndexIsCalled() {
+        // Given
+        String expectedMessage = "Greetings from Spring Boot!";
+        
+        // When
+        String actualMessage = helloController.index();
+        
+        // Then
+        assertEquals(expectedMessage, actualMessage);
     }
 }
