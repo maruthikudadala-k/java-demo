@@ -1705,7 +1705,7 @@ public class FleetService {
 //    // Create an aggregation pipeline to retrieve the proposal and related information.
 //    Aggregation aggregation =
 //            Aggregation.match(Criteria.where("sharedWithOrganizationId").is(organizationId)),
-//            Aggregation.project().and(ConvertOperators.ToString.toString("$_id")).as(PROPOSAL_ID_STRING).and("version").as("version")
+//            Aggregation.java_springboot-master().and(ConvertOperators.ToString.toString("$_id")).as(PROPOSAL_ID_STRING).and("version").as("version")
 //                       .and("role").as("role").and("awaiting").as("awaiting").and("proposalAction").as("proposalAction").and("proposalStatus")
 //                       .as("proposalStatus").and("showProposalName").as("showProposalName").and("opportunity").as("opportunity")
 //                       .and("companyId").as("companyId").and("priceBookId").as("priceBookId").and("priceBy").as("priceBy")

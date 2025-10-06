@@ -7,12 +7,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,8 +29,10 @@ public class ServiceAccountServiceTest {
     public void shouldReturnAllServiceAccounts() {
         when(serviceAccountMongoDbRepository.findAll()).thenReturn(Collections.emptyList());
 
-        assertEquals(Collections.emptyList(), serviceAccountService.getAll());
-        verify(serviceAccountMongoDbRepository).findAll();
+        var result = serviceAccountService.getAll();
+
+        assertEquals(Collections.emptyList(), result);
+        verify(serviceAccountMongoDbRepository, times(1)).findAll();
     }
 
     @Test
@@ -37,8 +40,10 @@ public class ServiceAccountServiceTest {
         String organizationId = "org123";
         when(serviceAccountMongoDbRepository.findByOrganizationId(organizationId)).thenReturn(Collections.emptyList());
 
-        assertEquals(Collections.emptyList(), serviceAccountService.getByOrganizationId(organizationId));
-        verify(serviceAccountMongoDbRepository).findByOrganizationId(organizationId);
+        var result = serviceAccountService.getByOrganizationId(organizationId);
+
+        assertEquals(Collections.emptyList(), result);
+        verify(serviceAccountMongoDbRepository, times(1)).findByOrganizationId(organizationId);
     }
 
     @Test
@@ -48,9 +53,10 @@ public class ServiceAccountServiceTest {
         when(serviceAccountMongoDbRepository.findById(serviceAccountId)).thenReturn(Optional.of(serviceAccount));
 
         Optional<ServiceAccount> result = serviceAccountService.get(serviceAccountId);
+
         assertTrue(result.isPresent());
         assertEquals(serviceAccount, result.get());
-        verify(serviceAccountMongoDbRepository).findById(serviceAccountId);
+        verify(serviceAccountMongoDbRepository, times(1)).findById(serviceAccountId);
     }
 
     @Test
@@ -59,8 +65,9 @@ public class ServiceAccountServiceTest {
         when(serviceAccountMongoDbRepository.save(serviceAccount)).thenReturn(serviceAccount);
 
         ServiceAccount result = serviceAccountService.save(serviceAccount);
+
         assertEquals(serviceAccount, result);
-        verify(serviceAccountMongoDbRepository).save(serviceAccount);
+        verify(serviceAccountMongoDbRepository, times(1)).save(serviceAccount);
     }
 
     @Test
@@ -68,7 +75,8 @@ public class ServiceAccountServiceTest {
         ServiceAccount serviceAccount = new ServiceAccount();
 
         serviceAccountService.update(serviceAccount);
-        verify(serviceAccountMongoDbRepository).save(serviceAccount);
+
+        verify(serviceAccountMongoDbRepository, times(1)).save(serviceAccount);
     }
 
     @Test
@@ -76,6 +84,7 @@ public class ServiceAccountServiceTest {
         String serviceAccountId = "account123";
 
         serviceAccountService.delete(serviceAccountId);
-        verify(serviceAccountMongoDbRepository).deleteById(serviceAccountId);
+
+        verify(serviceAccountMongoDbRepository, times(1)).deleteById(serviceAccountId);
     }
 }
