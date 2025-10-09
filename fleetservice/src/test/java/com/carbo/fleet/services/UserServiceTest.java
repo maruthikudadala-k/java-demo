@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.MockitoExtension;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -92,8 +92,8 @@ public class UserServiceTest {
         User user = new User();
         when(userRepository.save(user)).thenReturn(user);
 
-        User savedUser = userService.saveUser(user);
-        assertNotNull(savedUser);
+        User result = userService.saveUser(user);
+        assertNotNull(result);
         verify(userRepository, times(1)).save(user);
     }
 
@@ -101,6 +101,7 @@ public class UserServiceTest {
     public void shouldUpdateUser() {
         User user = new User();
         userService.updateUser(user);
+
         verify(userRepository, times(1)).save(user);
     }
 
@@ -108,6 +109,7 @@ public class UserServiceTest {
     public void shouldDeleteUser() {
         String userId = "user123";
         userService.deleteUser(userId);
+
         verify(userRepository, times(1)).deleteById(userId);
     }
 }
