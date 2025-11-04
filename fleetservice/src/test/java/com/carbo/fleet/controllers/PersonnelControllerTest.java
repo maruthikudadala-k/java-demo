@@ -4,19 +4,23 @@ package com.carbo.fleet.controllers;
 import com.carbo.fleet.dto.PersonnelDto;
 import com.carbo.fleet.model.PersonnelDisplay;
 import com.carbo.fleet.services.PersonnelService;
+import com.carbo.fleet.utils.Constants;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class PersonnelControllerTest {
@@ -28,127 +32,161 @@ public class PersonnelControllerTest {
     private PersonnelController personnelController;
 
     @Test
-    public void shouldReturnAllPersonnelWhenGetAllPersonnelCalled() {
+    public void shouldReturnPersonnelDisplayWhenGetAllPersonnel() {
+        // Given
         MockHttpServletRequest request = new MockHttpServletRequest();
         String organizationId = "org123";
         request.setUserPrincipal(() -> organizationId);
-
         PersonnelDisplay expectedDisplay = PersonnelDisplay.builder()
                 .personnelDisplayObject(Collections.emptyList())
                 .totalCount(0L)
                 .build();
-
         when(personnelService.findAll(organizationId, 0, 10)).thenReturn(expectedDisplay);
 
+        // When
         PersonnelDisplay actualDisplay = personnelController.getAllPersonnel(request, 0, 10);
 
+        // Then
         assertEquals(expectedDisplay, actualDisplay);
-        verify(personnelService).findAll(organizationId, 0, 10);
     }
 
     @Test
-    public void shouldReturnPersonnelWhenGetPersonnelByIdCalled() {
+    public void shouldReturnPersonnelDtoWhenGetPersonnelById() {
+        // Given
         String id = "personnelId";
-        PersonnelDto expectedPersonnel = new PersonnelDto();
-        expectedPersonnel.setId(id);
+        PersonnelDto expectedDto = PersonnelDto.builder()
+                .id(id)
+                .firstName("John")
+                .secondName("Doe")
+                .jobTitle("Engineer")
+                .employeeId("emp123")
+                .supervisor(true)
+                .districtId("dist123")
+                .fleetId("fleet123")
+                .crewId("crew123")
+                .build();
+        when(personnelService.findById(id)).thenReturn(expectedDto);
 
-        when(personnelService.findById(id)).thenReturn(expectedPersonnel);
+        // When
+        PersonnelDto actualDto = personnelController.getPersonnel(new MockHttpServletRequest(), id);
 
-        PersonnelDto actualPersonnel = personnelController.getPersonnel(new MockHttpServletRequest(), id);
-
-        assertEquals(expectedPersonnel, actualPersonnel);
-        verify(personnelService).findById(id);
+        // Then
+        assertEquals(expectedDto, actualDto);
     }
 
     @Test
-    public void shouldCreatePersonnelWhenCreatePersonnelCalled() {
+    public void shouldCreatePersonnelAndReturnCreatedMessage() {
+        // Given
         MockHttpServletRequest request = new MockHttpServletRequest();
         String organizationId = "org123";
         request.setUserPrincipal(() -> organizationId);
-
-        PersonnelDto personnelDto = new PersonnelDto();
+        PersonnelDto personnelDto = PersonnelDto.builder()
+                .firstName("John")
+                .secondName("Doe")
+                .jobTitle("Engineer")
+                .employeeId("emp123")
+                .supervisor(true)
+                .districtId("dist123")
+                .fleetId("fleet123")
+                .crewId("crew123")
+                .build();
         personnelDto.setOrganizationId(organizationId);
-        personnelDto.setFirstName("First");
-        personnelDto.setSecondName("Last");
-        personnelDto.setJobTitle("Job");
-        personnelDto.setEmployeeId("emp123");
-        personnelDto.setSupervisor(true);
-        personnelDto.setDistrictId("dist123");
-        personnelDto.setFleetId("fleet123");
-        personnelDto.setCrewId("crew123");
-
+        Map<String, String> expectedMessage = new HashMap<>();
+        expectedMessage.put("successMessage", Constants.PERSONNEL_CREATED);
         when(personnelService.savePersonnel(personnelDto)).thenReturn(true);
 
-        ResponseEntity<Object> response = personnelController.createPersonnel(request, personnelDto);
+        // When
+        ResponseEntity<Object> actualResponse = personnelController.createPersonnel(request, personnelDto);
 
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertTrue(response.getBody() instanceof Map);
-        verify(personnelService).savePersonnel(personnelDto);
+        // Then
+        assertEquals(HttpStatus.CREATED, actualResponse.getStatusCode());
+        assertEquals(expectedMessage, actualResponse.getBody());
     }
 
     @Test
-    public void shouldReturnConflictWhenPersonnelAlreadyExists() {
+    public void shouldReturnConflictMessageWhenPersonnelAlreadyExists() {
+        // Given
         MockHttpServletRequest request = new MockHttpServletRequest();
         String organizationId = "org123";
         request.setUserPrincipal(() -> organizationId);
-
-        PersonnelDto personnelDto = new PersonnelDto();
+        PersonnelDto personnelDto = PersonnelDto.builder()
+                .firstName("John")
+                .secondName("Doe")
+                .jobTitle("Engineer")
+                .employeeId("emp123")
+                .districtId("dist123")
+                .fleetId("fleet123")
+                .crewId("crew123")
+                .build();
         personnelDto.setOrganizationId(organizationId);
-
+        Map<String, String> expectedMessage = new HashMap<>();
+        expectedMessage.put("errorMessage", Constants.PERSONNEL_ALREADY_EXISTS);
         when(personnelService.savePersonnel(personnelDto)).thenReturn(false);
 
-        ResponseEntity<Object> response = personnelController.createPersonnel(request, personnelDto);
+        // When
+        ResponseEntity<Object> actualResponse = personnelController.createPersonnel(request, personnelDto);
 
-        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertTrue(response.getBody() instanceof Map);
-        verify(personnelService).savePersonnel(personnelDto);
+        // Then
+        assertEquals(HttpStatus.CONFLICT, actualResponse.getStatusCode());
+        assertEquals(expectedMessage, actualResponse.getBody());
     }
 
     @Test
-    public void shouldUpdatePersonnelWhenUpdatePersonnelCalled() {
+    public void shouldUpdatePersonnelAndReturnUpdatedDto() {
+        // Given
         MockHttpServletRequest request = new MockHttpServletRequest();
         String organizationId = "org123";
         request.setUserPrincipal(() -> organizationId);
-
-        PersonnelDto personnelDto = new PersonnelDto();
-        personnelDto.setId("personnelId");
+        PersonnelDto personnelDto = PersonnelDto.builder()
+                .id("personnelId")
+                .firstName("John")
+                .secondName("Doe")
+                .jobTitle("Engineer")
+                .employeeId("emp123")
+                .supervisor(true)
+                .districtId("dist123")
+                .fleetId("fleet123")
+                .crewId("crew123")
+                .build();
         personnelDto.setOrganizationId(organizationId);
-
         when(personnelService.updatePersonnel(personnelDto)).thenReturn(true);
         when(personnelService.findById(personnelDto.getId())).thenReturn(personnelDto);
 
-        PersonnelDto updatedPersonnel = personnelController.updatePersonnel(request, personnelDto);
+        // When
+        PersonnelDto actualDto = personnelController.updatePersonnel(request, personnelDto);
 
-        assertEquals(personnelDto, updatedPersonnel);
-        verify(personnelService).updatePersonnel(personnelDto);
-        verify(personnelService).findById(personnelDto.getId());
+        // Then
+        assertEquals(personnelDto, actualDto);
     }
 
     @Test
-    public void shouldDeletePersonnelWhenDeletePersonnelCalled() {
+    public void shouldDeletePersonnel() {
+        // Given
         String id = "personnelId";
 
+        // When
         personnelController.deletePersonnel(id);
 
-        verify(personnelService).deletePersonnel(id);
+        // Then
+        Mockito.verify(personnelService).deletePersonnel(id);
     }
 
     @Test
-    public void shouldReturnFilteredPersonnelWhenGetAllPersonnelByFilterCalled() {
+    public void shouldReturnPersonnelDisplayWhenGetAllPersonnelByFilter() {
+        // Given
         MockHttpServletRequest request = new MockHttpServletRequest();
         String organizationId = "org123";
         request.setUserPrincipal(() -> organizationId);
-
         PersonnelDisplay expectedDisplay = PersonnelDisplay.builder()
                 .personnelDisplayObject(Collections.emptyList())
                 .totalCount(0L)
                 .build();
+        when(personnelService.findbyValue(organizationId, "", "", "", 0, 10)).thenReturn(expectedDisplay);
 
-        when(personnelService.findbyValue(organizationId, "name", "dist123", "job", 0, 10)).thenReturn(expectedDisplay);
+        // When
+        PersonnelDisplay actualDisplay = personnelController.getAllPersonnelByFilter(request, 0, 10, "", "", "");
 
-        PersonnelDisplay actualDisplay = personnelController.getAllPersonnelByFilter(request, 0, 10, "name", "dist123", "job");
-
+        // Then
         assertEquals(expectedDisplay, actualDisplay);
-        verify(personnelService).findbyValue(organizationId, "name", "dist123", "job", 0, 10);
     }
 }

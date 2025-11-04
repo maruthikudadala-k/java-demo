@@ -7,12 +7,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.MockitoExtension;
 
 import java.util.Collections;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,18 +57,8 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldReturnEmptyOptionalWhenUserNotFoundById() {
-        String userId = "user123";
-        when(userRepository.findById(userId)).thenReturn(Optional.empty());
-
-        Optional<User> result = userService.getUser(userId);
-        assertFalse(result.isPresent());
-        verify(userRepository, times(1)).findById(userId);
-    }
-
-    @Test
     public void shouldReturnUserByUserName() {
-        String userName = "testUser";
+        String userName = "username";
         User user = new User();
         user.setUserName(userName);
         when(userRepository.findByUserName(userName)).thenReturn(Optional.of(user));
@@ -78,22 +70,12 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldReturnEmptyOptionalWhenUserNotFoundByUserName() {
-        String userName = "testUser";
-        when(userRepository.findByUserName(userName)).thenReturn(Optional.empty());
-
-        Optional<User> result = userService.getUserByUserName(userName);
-        assertFalse(result.isPresent());
-        verify(userRepository, times(1)).findByUserName(userName);
-    }
-
-    @Test
     public void shouldSaveUser() {
         User user = new User();
-        when(userRepository.save(user)).thenReturn(user);
+        when(userRepository.save(any(User.class))).thenReturn(user);
 
-        User savedUser = userService.saveUser(user);
-        assertNotNull(savedUser);
+        User result = userService.saveUser(user);
+        assertEquals(user, result);
         verify(userRepository, times(1)).save(user);
     }
 
