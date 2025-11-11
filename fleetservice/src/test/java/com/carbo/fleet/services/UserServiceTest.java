@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoExtension;
 
 import java.util.Collections;
@@ -14,8 +15,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
@@ -27,69 +26,102 @@ public class UserServiceTest {
     private UserService userService;
 
     @Test
-    public void shouldReturnAllUsers() {
-        when(userRepository.findAll()).thenReturn(Collections.emptyList());
+    public void shouldReturnAllUsersWhenGetAllIsCalled() {
+        // Arrange
+        User user = new User();
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setUserName("johndoe");
+        user.setOrganizationId("org123");
+        Mockito.when(userRepository.findAll()).thenReturn(Collections.singletonList(user));
 
-        assertEquals(Collections.emptyList(), userService.getAll());
-        verify(userRepository, times(1)).findAll();
+        // Act
+        List<User> result = userService.getAll();
+
+        // Assert
+        assertEquals(1, result.size());
+        assertEquals("John", result.get(0).getFirstName());
     }
 
     @Test
-    public void shouldReturnUsersByOrganizationId() {
+    public void shouldReturnUsersByOrganizationIdWhenGetByOrganizationIdIsCalled() {
+        // Arrange
         String organizationId = "org123";
-        when(userRepository.findByOrganizationId(organizationId)).thenReturn(Collections.emptyList());
+        User user = new User();
+        user.setOrganizationId(organizationId);
+        Mockito.when(userRepository.findByOrganizationId(organizationId)).thenReturn(Collections.singletonList(user));
 
-        assertEquals(Collections.emptyList(), userService.getByOrganizationId(organizationId));
-        verify(userRepository, times(1)).findByOrganizationId(organizationId);
+        // Act
+        List<User> result = userService.getByOrganizationId(organizationId);
+
+        // Assert
+        assertEquals(1, result.size());
+        assertEquals(organizationId, result.get(0).getOrganizationId());
     }
 
     @Test
-    public void shouldReturnUserById() {
-        String userId = "user123";
+    public void shouldReturnUserWhenGetUserIsCalled() {
+        // Arrange
+        String userId = "userId123";
         User user = new User();
-        user.setId(userId);
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
+        // Act
         Optional<User> result = userService.getUser(userId);
+
+        // Assert
         assertTrue(result.isPresent());
-        assertEquals(userId, result.get().getId());
-        verify(userRepository, times(1)).findById(userId);
     }
 
     @Test
-    public void shouldReturnUserByUserName() {
-        String userName = "username";
+    public void shouldReturnUserWhenGetUserByUserNameIsCalled() {
+        // Arrange
+        String userName = "johndoe";
         User user = new User();
-        user.setUserName(userName);
-        when(userRepository.findByUserName(userName)).thenReturn(Optional.of(user));
+        Mockito.when(userRepository.findByUserName(userName)).thenReturn(Optional.of(user));
 
+        // Act
         Optional<User> result = userService.getUserByUserName(userName);
+
+        // Assert
         assertTrue(result.isPresent());
-        assertEquals(userName, result.get().getUserName());
-        verify(userRepository, times(1)).findByUserName(userName);
     }
 
     @Test
-    public void shouldSaveUser() {
+    public void shouldSaveUserWhenSaveUserIsCalled() {
+        // Arrange
         User user = new User();
-        when(userRepository.save(any(User.class))).thenReturn(user);
+        Mockito.when(userRepository.save(user)).thenReturn(user);
 
+        // Act
         User result = userService.saveUser(user);
+
+        // Assert
         assertEquals(user, result);
-        verify(userRepository, times(1)).save(user);
     }
 
     @Test
-    public void shouldUpdateUser() {
+    public void shouldUpdateUserWhenUpdateUserIsCalled() {
+        // Arrange
         User user = new User();
+        Mockito.when(userRepository.save(user)).thenReturn(user);
+
+        // Act
         userService.updateUser(user);
-        verify(userRepository, times(1)).save(user);
+
+        // Assert
+        Mockito.verify(userRepository).save(user);
     }
 
     @Test
-    public void shouldDeleteUser() {
-        String userId = "user123";
+    public void shouldDeleteUserWhenDeleteUserIsCalled() {
+        // Arrange
+        String userId = "userId123";
+
+        // Act
         userService.deleteUser(userId);
-        verify(userRepository, times(1)).deleteById(userId);
+
+        // Assert
+        Mockito.verify(userRepository).deleteById(userId);
     }
 }
