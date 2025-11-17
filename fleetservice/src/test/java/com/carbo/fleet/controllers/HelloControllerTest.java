@@ -7,7 +7,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @ExtendWith(MockitoExtension.class)
@@ -17,14 +16,14 @@ public class HelloControllerTest {
     private HelloController helloController;
 
     @Test
-    public void shouldReturnGreetingsWhenIndexIsCalled() {
+    public void shouldReturnGreetingWhenIndexIsCalled() {
         // Arrange
-        String expectedResponse = "Greetings from Spring Boot!";
+        String expectedGreeting = "Greetings from Spring Boot!";
 
         // Act
-        String actualResponse = helloController.index();
+        String actualGreeting = helloController.index();
 
         // Assert
-        assertEquals(expectedResponse, actualResponse);
+        assertEquals(expectedGreeting, actualGreeting);
     }
 }
