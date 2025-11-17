@@ -33,7 +33,11 @@ public class UserServiceTest {
         user.setFirstName("John");
         user.setLastName("Doe");
         user.setUserName("johndoe");
+        user.setPassword("password");
+        user.setTitle("Mr.");
         user.setOrganizationId("org1");
+        user.setAuthorities(Collections.emptyList());
+
         Mockito.when(userRepository.findAll()).thenReturn(Collections.singletonList(user));
 
         // Act
@@ -47,51 +51,64 @@ public class UserServiceTest {
     @Test
     public void shouldReturnUsersByOrganizationId() {
         // Arrange
+        String organizationId = "org1";
         User user = new User();
         user.setId("1");
         user.setFirstName("John");
         user.setLastName("Doe");
         user.setUserName("johndoe");
-        user.setOrganizationId("org1");
-        Mockito.when(userRepository.findByOrganizationId("org1")).thenReturn(Collections.singletonList(user));
+        user.setPassword("password");
+        user.setTitle("Mr.");
+        user.setOrganizationId(organizationId);
+        user.setAuthorities(Collections.emptyList());
+
+        Mockito.when(userRepository.findByOrganizationId(organizationId)).thenReturn(Collections.singletonList(user));
 
         // Act
-        List<User> users = userService.getByOrganizationId("org1");
+        List<User> users = userService.getByOrganizationId(organizationId);
 
         // Assert
         assertEquals(1, users.size());
-        assertEquals("John", users.get(0).getFirstName());
+        assertEquals(organizationId, users.get(0).getOrganizationId());
     }
 
     @Test
     public void shouldReturnUserById() {
         // Arrange
+        String userId = "1";
         User user = new User();
-        user.setId("1");
-        Mockito.when(userRepository.findById("1")).thenReturn(Optional.of(user));
+        user.setId(userId);
+        user.setFirstName("John");
+        user.setLastName("Doe");
+
+        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         // Act
-        Optional<User> result = userService.getUser("1");
+        Optional<User> foundUser = userService.getUser(userId);
 
         // Assert
-        assertTrue(result.isPresent());
-        assertEquals("1", result.get().getId());
+        assertTrue(foundUser.isPresent());
+        assertEquals("John", foundUser.get().getFirstName());
     }
 
     @Test
     public void shouldReturnUserByUserName() {
         // Arrange
+        String userName = "johndoe";
         User user = new User();
         user.setId("1");
-        user.setUserName("johndoe");
-        Mockito.when(userRepository.findByUserName("johndoe")).thenReturn(Optional.of(user));
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setUserName(userName);
+
+        Mockito.when(userRepository.findByUserName(userName)).thenReturn(Optional.of(user));
 
         // Act
-        Optional<User> result = userService.getUserByUserName("johndoe");
+        Optional<User> foundUser = userService.getUserByUserName(userName);
 
         // Assert
-        assertTrue(result.isPresent());
-        assertEquals("johndoe", result.get().getUserName());
+        assertTrue(foundUser.isPresent());
+        assertEquals("John", foundUser.get().getFirstName());
     }
 
     @Test
@@ -99,13 +116,15 @@ public class UserServiceTest {
         // Arrange
         User user = new User();
         user.setId("1");
+        user.setFirstName("John");
+
         Mockito.when(userRepository.save(user)).thenReturn(user);
 
         // Act
-        User result = userService.saveUser(user);
+        User savedUser = userService.saveUser(user);
 
         // Assert
-        assertEquals("1", result.getId());
+        assertEquals("John", savedUser.getFirstName());
     }
 
     @Test
@@ -113,7 +132,7 @@ public class UserServiceTest {
         // Arrange
         User user = new User();
         user.setId("1");
-        Mockito.doNothing().when(userRepository).save(user);
+        user.setFirstName("John");
 
         // Act
         userService.updateUser(user);
@@ -123,10 +142,9 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldDeleteUser() {
+    public void shouldDeleteUserById() {
         // Arrange
         String userId = "1";
-        Mockito.doNothing().when(userRepository).deleteById(userId);
 
         // Act
         userService.deleteUser(userId);
