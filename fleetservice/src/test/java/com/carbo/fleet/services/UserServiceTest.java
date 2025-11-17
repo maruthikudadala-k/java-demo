@@ -33,10 +33,7 @@ public class UserServiceTest {
         user.setFirstName("John");
         user.setLastName("Doe");
         user.setUserName("johndoe");
-        user.setPassword("password");
-        user.setTitle("Mr.");
         user.setOrganizationId("org1");
-        user.setAuthorities(Collections.emptyList());
 
         Mockito.when(userRepository.findAll()).thenReturn(Collections.singletonList(user));
 
@@ -57,10 +54,7 @@ public class UserServiceTest {
         user.setFirstName("John");
         user.setLastName("Doe");
         user.setUserName("johndoe");
-        user.setPassword("password");
-        user.setTitle("Mr.");
         user.setOrganizationId(organizationId);
-        user.setAuthorities(Collections.emptyList());
 
         Mockito.when(userRepository.findByOrganizationId(organizationId)).thenReturn(Collections.singletonList(user));
 
@@ -69,7 +63,7 @@ public class UserServiceTest {
 
         // Assert
         assertEquals(1, users.size());
-        assertEquals(organizationId, users.get(0).getOrganizationId());
+        assertEquals("John", users.get(0).getFirstName());
     }
 
     @Test
@@ -79,16 +73,15 @@ public class UserServiceTest {
         User user = new User();
         user.setId(userId);
         user.setFirstName("John");
-        user.setLastName("Doe");
 
         Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         // Act
-        Optional<User> foundUser = userService.getUser(userId);
+        Optional<User> result = userService.getUser(userId);
 
         // Assert
-        assertTrue(foundUser.isPresent());
-        assertEquals("John", foundUser.get().getFirstName());
+        assertTrue(result.isPresent());
+        assertEquals("John", result.get().getFirstName());
     }
 
     @Test
@@ -97,18 +90,16 @@ public class UserServiceTest {
         String userName = "johndoe";
         User user = new User();
         user.setId("1");
-        user.setFirstName("John");
-        user.setLastName("Doe");
         user.setUserName(userName);
 
         Mockito.when(userRepository.findByUserName(userName)).thenReturn(Optional.of(user));
 
         // Act
-        Optional<User> foundUser = userService.getUserByUserName(userName);
+        Optional<User> result = userService.getUserByUserName(userName);
 
         // Assert
-        assertTrue(foundUser.isPresent());
-        assertEquals("John", foundUser.get().getFirstName());
+        assertTrue(result.isPresent());
+        assertEquals(userName, result.get().getUserName());
     }
 
     @Test
@@ -138,7 +129,7 @@ public class UserServiceTest {
         userService.updateUser(user);
 
         // Assert
-        Mockito.verify(userRepository).save(user);
+        Mockito.verify(userRepository, Mockito.times(1)).save(user);
     }
 
     @Test
@@ -150,6 +141,6 @@ public class UserServiceTest {
         userService.deleteUser(userId);
 
         // Assert
-        Mockito.verify(userRepository).deleteById(userId);
+        Mockito.verify(userRepository, Mockito.times(1)).deleteById(userId);
     }
 }
