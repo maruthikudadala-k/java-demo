@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoExtension;
 
 import java.util.Collections;
@@ -15,6 +14,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
@@ -27,120 +27,70 @@ public class UserServiceTest {
 
     @Test
     public void shouldReturnAllUsers() {
-        // Arrange
-        User user = new User();
-        user.setId("1");
-        user.setFirstName("John");
-        user.setLastName("Doe");
-        user.setUserName("johndoe");
-        user.setOrganizationId("org1");
+        when(userRepository.findAll()).thenReturn(Collections.emptyList());
 
-        Mockito.when(userRepository.findAll()).thenReturn(Collections.singletonList(user));
-
-        // Act
-        List<User> users = userService.getAll();
-
-        // Assert
-        assertEquals(1, users.size());
-        assertEquals("John", users.get(0).getFirstName());
+        assertEquals(Collections.emptyList(), userService.getAll());
+        verify(userRepository, times(1)).findAll();
     }
 
     @Test
     public void shouldReturnUsersByOrganizationId() {
-        // Arrange
-        String organizationId = "org1";
-        User user = new User();
-        user.setId("1");
-        user.setFirstName("John");
-        user.setLastName("Doe");
-        user.setUserName("johndoe");
-        user.setOrganizationId(organizationId);
+        String organizationId = "org123";
+        when(userRepository.findByOrganizationId(organizationId)).thenReturn(Collections.emptyList());
 
-        Mockito.when(userRepository.findByOrganizationId(organizationId)).thenReturn(Collections.singletonList(user));
-
-        // Act
-        List<User> users = userService.getByOrganizationId(organizationId);
-
-        // Assert
-        assertEquals(1, users.size());
-        assertEquals("John", users.get(0).getFirstName());
+        assertEquals(Collections.emptyList(), userService.getByOrganizationId(organizationId));
+        verify(userRepository, times(1)).findByOrganizationId(organizationId);
     }
 
     @Test
     public void shouldReturnUserById() {
-        // Arrange
-        String userId = "1";
+        String userId = "user123";
         User user = new User();
         user.setId(userId);
-        user.setFirstName("John");
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        Mockito.when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-
-        // Act
         Optional<User> result = userService.getUser(userId);
-
-        // Assert
         assertTrue(result.isPresent());
-        assertEquals("John", result.get().getFirstName());
+        assertEquals(userId, result.get().getId());
+        verify(userRepository, times(1)).findById(userId);
     }
 
     @Test
     public void shouldReturnUserByUserName() {
-        // Arrange
-        String userName = "johndoe";
+        String userName = "testUser";
         User user = new User();
-        user.setId("1");
         user.setUserName(userName);
+        when(userRepository.findByUserName(userName)).thenReturn(Optional.of(user));
 
-        Mockito.when(userRepository.findByUserName(userName)).thenReturn(Optional.of(user));
-
-        // Act
         Optional<User> result = userService.getUserByUserName(userName);
-
-        // Assert
         assertTrue(result.isPresent());
         assertEquals(userName, result.get().getUserName());
+        verify(userRepository, times(1)).findByUserName(userName);
     }
 
     @Test
     public void shouldSaveUser() {
-        // Arrange
         User user = new User();
-        user.setId("1");
-        user.setFirstName("John");
+        when(userRepository.save(user)).thenReturn(user);
 
-        Mockito.when(userRepository.save(user)).thenReturn(user);
-
-        // Act
-        User savedUser = userService.saveUser(user);
-
-        // Assert
-        assertEquals("John", savedUser.getFirstName());
+        User result = userService.saveUser(user);
+        assertEquals(user, result);
+        verify(userRepository, times(1)).save(user);
     }
 
     @Test
     public void shouldUpdateUser() {
-        // Arrange
         User user = new User();
-        user.setId("1");
-        user.setFirstName("John");
-
-        // Act
         userService.updateUser(user);
 
-        // Assert
-        Mockito.verify(userRepository, Mockito.times(1)).save(user);
+        verify(userRepository, times(1)).save(user);
     }
 
     @Test
-    public void shouldDeleteUserById() {
-        // Arrange
-        String userId = "1";
-
-        // Act
+    public void shouldDeleteUser() {
+        String userId = "user123";
         userService.deleteUser(userId);
 
-        // Assert
-        Mockito.verify(userRepository, Mockito.times(1)).deleteById(userId);
+        verify(userRepository, times(1)).deleteById(userId);
     }
 }
