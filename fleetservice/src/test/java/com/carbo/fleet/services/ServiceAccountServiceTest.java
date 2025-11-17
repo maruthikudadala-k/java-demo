@@ -8,14 +8,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.MockitoExtension;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
 public class ServiceAccountServiceTest {
@@ -28,56 +27,83 @@ public class ServiceAccountServiceTest {
 
     @Test
     public void shouldReturnAllServiceAccounts() {
-        ServiceAccount account1 = new ServiceAccount();
-        ServiceAccount account2 = new ServiceAccount();
-        when(serviceAccountMongoDbRepository.findAll()).thenReturn(Arrays.asList(account1, account2));
+        // Arrange
+        ServiceAccount serviceAccount = new ServiceAccount();
+        Mockito.when(serviceAccountMongoDbRepository.findAll()).thenReturn(Collections.singletonList(serviceAccount));
 
-        assertEquals(2, serviceAccountService.getAll().size());
-        verify(serviceAccountMongoDbRepository, times(1)).findAll();
+        // Act
+        List<ServiceAccount> result = serviceAccountService.getAll();
+
+        // Assert
+        assertEquals(1, result.size());
+        assertEquals(serviceAccount, result.get(0));
     }
 
     @Test
     public void shouldReturnServiceAccountsByOrganizationId() {
+        // Arrange
         String organizationId = "org123";
-        ServiceAccount account = new ServiceAccount();
-        when(serviceAccountMongoDbRepository.findByOrganizationId(organizationId)).thenReturn(Collections.singletonList(account));
+        ServiceAccount serviceAccount = new ServiceAccount();
+        Mockito.when(serviceAccountMongoDbRepository.findByOrganizationId(organizationId)).thenReturn(Collections.singletonList(serviceAccount));
 
-        assertEquals(1, serviceAccountService.getByOrganizationId(organizationId).size());
-        verify(serviceAccountMongoDbRepository, times(1)).findByOrganizationId(organizationId);
+        // Act
+        List<ServiceAccount> result = serviceAccountService.getByOrganizationId(organizationId);
+
+        // Assert
+        assertEquals(1, result.size());
+        assertEquals(serviceAccount, result.get(0));
     }
 
     @Test
-    public void shouldReturnOptionalServiceAccountById() {
-        String serviceAccountId = "account123";
-        ServiceAccount account = new ServiceAccount();
-        when(serviceAccountMongoDbRepository.findById(serviceAccountId)).thenReturn(Optional.of(account));
+    public void shouldReturnServiceAccountById() {
+        // Arrange
+        String serviceAccountId = "acc123";
+        ServiceAccount serviceAccount = new ServiceAccount();
+        Mockito.when(serviceAccountMongoDbRepository.findById(serviceAccountId)).thenReturn(Optional.of(serviceAccount));
 
+        // Act
         Optional<ServiceAccount> result = serviceAccountService.get(serviceAccountId);
-        assertEquals(true, result.isPresent());
-        verify(serviceAccountMongoDbRepository, times(1)).findById(serviceAccountId);
+
+        // Assert
+        assertTrue(result.isPresent());
+        assertEquals(serviceAccount, result.get());
     }
 
     @Test
     public void shouldSaveServiceAccount() {
-        ServiceAccount account = new ServiceAccount();
-        when(serviceAccountMongoDbRepository.save(account)).thenReturn(account);
+        // Arrange
+        ServiceAccount serviceAccount = new ServiceAccount();
+        Mockito.when(serviceAccountMongoDbRepository.save(serviceAccount)).thenReturn(serviceAccount);
 
-        ServiceAccount savedAccount = serviceAccountService.save(account);
-        assertEquals(account, savedAccount);
-        verify(serviceAccountMongoDbRepository, times(1)).save(account);
+        // Act
+        ServiceAccount result = serviceAccountService.save(serviceAccount);
+
+        // Assert
+        assertEquals(serviceAccount, result);
     }
 
     @Test
     public void shouldUpdateServiceAccount() {
-        ServiceAccount account = new ServiceAccount();
-        serviceAccountService.update(account);
-        verify(serviceAccountMongoDbRepository, times(1)).save(account);
+        // Arrange
+        ServiceAccount serviceAccount = new ServiceAccount();
+        Mockito.when(serviceAccountMongoDbRepository.save(serviceAccount)).thenReturn(serviceAccount);
+
+        // Act
+        serviceAccountService.update(serviceAccount);
+
+        // Assert
+        Mockito.verify(serviceAccountMongoDbRepository).save(serviceAccount);
     }
 
     @Test
-    public void shouldDeleteServiceAccountById() {
-        String serviceAccountId = "account123";
+    public void shouldDeleteServiceAccount() {
+        // Arrange
+        String serviceAccountId = "acc123";
+
+        // Act
         serviceAccountService.delete(serviceAccountId);
-        verify(serviceAccountMongoDbRepository, times(1)).deleteById(serviceAccountId);
+
+        // Assert
+        Mockito.verify(serviceAccountMongoDbRepository).deleteById(serviceAccountId);
     }
 }
