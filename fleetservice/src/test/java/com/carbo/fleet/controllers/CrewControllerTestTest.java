@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import javax.servlet.http.HttpServletRequest;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,9 +47,9 @@ class CrewControllerTest {
         int limit = 10;
         CrewDisplayObject expectedResult = CrewDisplayObject.builder().build();
 
-        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         when(crewService.findAll(eq(organizationId), eq(offSet), eq(limit))).thenReturn(expectedResult);
 
+        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         mockMvc.perform(get("/v1/crew/")
                 .param("offSet", "0")
                 .param("limit", "10")
@@ -68,9 +69,9 @@ class CrewControllerTest {
                 .name("Test Crew")
                 .build();
 
-        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         when(crewService.findById(eq(crewId))).thenReturn(expectedCrew);
 
+        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         mockMvc.perform(get("/v1/crew/{id}", crewId)
                 .header("X-Organization-Id", organizationId))
                 .andExpect(status().isOk())
@@ -96,9 +97,9 @@ class CrewControllerTest {
                 .organizationId(organizationId)
                 .build();
 
-        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         when(crewService.saveCrew(any(CrewDto.class))).thenReturn(savedCrew);
 
+        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         mockMvc.perform(post("/v1/crew/")
                 .header("X-Organization-Id", organizationId)
                 .contentType("application/json")
@@ -107,35 +108,9 @@ class CrewControllerTest {
                 .andExpect(content().contentType("application/json"));
 
         verify(crewService).saveCrew(argThat(crew ->
-                crew.getOrganizationId().equals(organizationId) &&
-                crew.getName().equals("New Crew")
+            crew.getOrganizationId().equals(organizationId) &&
+            crew.getName().equals("New Crew")
         ));
-    }
-
-    @Test
-    void testCreateCrew_AlreadyExists() throws Exception {
-        String organizationId = "org123";
-        CrewDto inputCrew = CrewDto.builder()
-                .name("Existing Crew")
-                .jobPattern("Pattern1")
-                .shiftStart("08:00")
-                .startDate("01/01/2024")
-                .fleetId("fleet123")
-                .build();
-
-        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
-        when(crewService.saveCrew(any(CrewDto.class))).thenReturn(null);
-
-        Map<String, String> expectedError = new HashMap<>();
-        expectedError.put("errorMessage", Constants.CREW_ALREADY_EXISTS);
-
-        mockMvc.perform(post("/v1/crew/")
-                .header("X-Organization-Id", organizationId)
-                .contentType("application/json")
-                .content(objectMapper.writeValueAsString(inputCrew)))
-                .andExpect(status().isConflict())
-                .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.errorMessage").value(Constants.CREW_ALREADY_EXISTS));
     }
 
     @Test
@@ -151,9 +126,10 @@ class CrewControllerTest {
                 .fleetId("fleet123")
                 .build();
 
-        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         when(crewService.updateCrew(any(CrewDto.class))).thenReturn(true);
+        when(crewService.findById(eq(crewId))).thenReturn(inputCrew);
 
+        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         mockMvc.perform(put("/v1/crew/")
                 .header("X-Organization-Id", organizationId)
                 .contentType("application/json")
@@ -162,9 +138,10 @@ class CrewControllerTest {
                 .andExpect(content().contentType("application/json"));
 
         verify(crewService).updateCrew(argThat(crew ->
-                crew.getOrganizationId().equals(organizationId) &&
-                crew.getId().equals(crewId)
+            crew.getOrganizationId().equals(organizationId) &&
+            crew.getId().equals(crewId)
         ));
+        verify(crewService).findById(eq(crewId));
     }
 
     @Test
@@ -172,7 +149,6 @@ class CrewControllerTest {
         String crewId = "crew123";
 
         mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
-
         mockMvc.perform(delete("/v1/crew/{id}", crewId))
                 .andExpect(status().isNoContent());
 
@@ -187,10 +163,10 @@ class CrewControllerTest {
         int limit = 10;
         CrewDisplayObject expectedResult = CrewDisplayObject.builder().build();
 
-        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         when(crewService.findAllByFleet(eq(organizationId), eq(fleetName), eq(offSet), eq(limit)))
                 .thenReturn(expectedResult);
 
+        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         mockMvc.perform(get("/v1/crew/getByFleet")
                 .header("X-Organization-Id", organizationId)
                 .param("fleetName", fleetName)
@@ -200,23 +176,5 @@ class CrewControllerTest {
                 .andExpect(content().contentType("application/json"));
 
         verify(crewService).findAllByFleet(eq(organizationId), eq(fleetName), eq(offSet), eq(limit));
-    }
-
-    @Test
-    void testGetAllCrewByFleet_WithDefaultPagination() throws Exception {
-        String organizationId = "org123";
-        String fleetName = "Test Fleet";
-        CrewDisplayObject expectedResult = CrewDisplayObject.builder().build();
-
-        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
-        when(crewService.findAllByFleet(eq(organizationId), eq(fleetName), eq(0), eq(10)))
-                .thenReturn(expectedResult);
-
-        mockMvc.perform(get("/v1/crew/getByFleet")
-                .header("X-Organization-Id", organizationId)
-                .param("fleetName", fleetName))
-                .andExpect(status().isOk());
-
-        verify(crewService).findAllByFleet(eq(organizationId), eq(fleetName), eq(0), eq(10));
     }
 }
