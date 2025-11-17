@@ -26,71 +26,99 @@ public class UserServiceTest {
     private UserService userService;
 
     @Test
-    public void shouldReturnAllUsers() {
+    public void shouldReturnAllUsersWhenGetAllIsCalled() {
+        // Arrange
         when(userRepository.findAll()).thenReturn(Collections.emptyList());
 
-        assertEquals(Collections.emptyList(), userService.getAll());
-        verify(userRepository).findAll();
+        // Act
+        List<User> users = userService.getAll();
+
+        // Assert
+        assertEquals(Collections.emptyList(), users);
+        verify(userRepository, times(1)).findAll();
     }
 
     @Test
-    public void shouldReturnUsersByOrganizationId() {
+    public void shouldReturnUsersByOrganizationIdWhenGetByOrganizationIdIsCalled() {
+        // Arrange
         String organizationId = "org123";
         when(userRepository.findByOrganizationId(organizationId)).thenReturn(Collections.emptyList());
 
-        assertEquals(Collections.emptyList(), userService.getByOrganizationId(organizationId));
-        verify(userRepository).findByOrganizationId(organizationId);
+        // Act
+        List<User> users = userService.getByOrganizationId(organizationId);
+
+        // Assert
+        assertEquals(Collections.emptyList(), users);
+        verify(userRepository, times(1)).findByOrganizationId(organizationId);
     }
 
     @Test
-    public void shouldReturnUserById() {
+    public void shouldReturnUserWhenGetUserIsCalled() {
+        // Arrange
         String userId = "user123";
         User user = new User();
-        user.setId(userId);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        Optional<User> result = userService.getUser(userId);
-        assertTrue(result.isPresent());
-        assertEquals(userId, result.get().getId());
-        verify(userRepository).findById(userId);
+        // Act
+        Optional<User> retrievedUser = userService.getUser(userId);
+
+        // Assert
+        assertTrue(retrievedUser.isPresent());
+        assertEquals(user, retrievedUser.get());
+        verify(userRepository, times(1)).findById(userId);
     }
 
     @Test
-    public void shouldReturnUserByUserName() {
-        String userName = "testUser";
+    public void shouldReturnUserByUserNameWhenGetUserByUserNameIsCalled() {
+        // Arrange
+        String userName = "username";
         User user = new User();
-        user.setUserName(userName);
         when(userRepository.findByUserName(userName)).thenReturn(Optional.of(user));
 
-        Optional<User> result = userService.getUserByUserName(userName);
-        assertTrue(result.isPresent());
-        assertEquals(userName, result.get().getUserName());
-        verify(userRepository).findByUserName(userName);
+        // Act
+        Optional<User> retrievedUser = userService.getUserByUserName(userName);
+
+        // Assert
+        assertTrue(retrievedUser.isPresent());
+        assertEquals(user, retrievedUser.get());
+        verify(userRepository, times(1)).findByUserName(userName);
     }
 
     @Test
-    public void shouldSaveUser() {
+    public void shouldSaveUserWhenSaveUserIsCalled() {
+        // Arrange
         User user = new User();
         when(userRepository.save(user)).thenReturn(user);
 
-        User result = userService.saveUser(user);
-        assertEquals(user, result);
-        verify(userRepository).save(user);
+        // Act
+        User savedUser = userService.saveUser(user);
+
+        // Assert
+        assertEquals(user, savedUser);
+        verify(userRepository, times(1)).save(user);
     }
 
     @Test
-    public void shouldUpdateUser() {
+    public void shouldUpdateUserWhenUpdateUserIsCalled() {
+        // Arrange
         User user = new User();
+
+        // Act
         userService.updateUser(user);
 
-        verify(userRepository).save(user);
+        // Assert
+        verify(userRepository, times(1)).save(user);
     }
 
     @Test
-    public void shouldDeleteUser() {
+    public void shouldDeleteUserWhenDeleteUserIsCalled() {
+        // Arrange
         String userId = "user123";
+
+        // Act
         userService.deleteUser(userId);
 
-        verify(userRepository).deleteById(userId);
+        // Assert
+        verify(userRepository, times(1)).deleteById(userId);
     }
 }
