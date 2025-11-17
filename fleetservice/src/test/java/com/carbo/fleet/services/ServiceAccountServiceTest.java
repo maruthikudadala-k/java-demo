@@ -44,8 +44,7 @@ public class ServiceAccountServiceTest {
         // Arrange
         String organizationId = "org123";
         ServiceAccount serviceAccount = new ServiceAccount();
-        Mockito.when(serviceAccountMongoDbRepository.findByOrganizationId(organizationId))
-                .thenReturn(Collections.singletonList(serviceAccount));
+        Mockito.when(serviceAccountMongoDbRepository.findByOrganizationId(organizationId)).thenReturn(Collections.singletonList(serviceAccount));
 
         // Act
         List<ServiceAccount> result = serviceAccountService.getByOrganizationId(organizationId);
@@ -58,10 +57,9 @@ public class ServiceAccountServiceTest {
     @Test
     public void shouldReturnServiceAccountById() {
         // Arrange
-        String serviceAccountId = "account123";
+        String serviceAccountId = "sa123";
         ServiceAccount serviceAccount = new ServiceAccount();
-        Mockito.when(serviceAccountMongoDbRepository.findById(serviceAccountId))
-                .thenReturn(Optional.of(serviceAccount));
+        Mockito.when(serviceAccountMongoDbRepository.findById(serviceAccountId)).thenReturn(Optional.of(serviceAccount));
 
         // Act
         Optional<ServiceAccount> result = serviceAccountService.get(serviceAccountId);
@@ -98,9 +96,9 @@ public class ServiceAccountServiceTest {
     }
 
     @Test
-    public void shouldDeleteServiceAccountById() {
+    public void shouldDeleteServiceAccount() {
         // Arrange
-        String serviceAccountId = "account123";
+        String serviceAccountId = "sa123";
 
         // Act
         serviceAccountService.delete(serviceAccountId);
