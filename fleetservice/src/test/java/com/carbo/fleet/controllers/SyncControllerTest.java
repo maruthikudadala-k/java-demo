@@ -10,8 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.ResponseEntity;
+import org.mockito.junit.MockitoExtension;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
@@ -32,57 +31,78 @@ public class SyncControllerTest {
     private SyncController syncController;
 
     @Test
-    public void shouldReturnFleetTimestampMapWhenViewIsCalled() {
+    public void shouldReturnMapOfFleetIdsAndTimestampsWhenViewIsCalled() {
         // Arrange
-        String organizationId = "org123";
+        String organizationId = "org-123";
         Fleet fleet1 = new Fleet();
-        fleet1.setId("fleet1");
+        fleet1.setId("fleet-1");
         fleet1.setTs(100L);
-        
         Fleet fleet2 = new Fleet();
-        fleet2.setId("fleet2");
+        fleet2.setId("fleet-2");
         fleet2.setTs(200L);
-
         List<Fleet> fleets = Arrays.asList(fleet1, fleet2);
-        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
+
         when(fleetService.getByOrganizationId(organizationId)).thenReturn(fleets);
-        
-        Map<String, Long> expectedResult = new HashMap<>();
-        expectedResult.put("fleet1", 100L);
-        expectedResult.put("fleet2", 200L);
+        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
 
         // Act
         Map<String, Long> result = syncController.view(request);
 
         // Assert
-        assertEquals(expectedResult, result);
-        verify(fleetService).getByOrganizationId(organizationId);
+        assertEquals(2, result.size());
+        assertEquals(100L, result.get("fleet-1"));
+        assertEquals(200L, result.get("fleet-2"));
     }
 
     @Test
     public void shouldReturnSyncResponseWhenSyncIsCalled() {
         // Arrange
-        String organizationId = "org123";
         SyncRequest syncRequest = new SyncRequest();
-        Fleet fleet = new Fleet();
-        fleet.setId("fleet1");
-        fleet.setTs(100L);
-        fleet.setOrganizationId(organizationId);
-        syncRequest.setUpdate(Collections.singletonList(fleet));
+        Set<String> removeSet = new HashSet<>(Collections.singletonList("fleet-1"));
+        syncRequest.setRemove(removeSet);
 
-        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
-        when(fleetService.getFleet("fleet1")).thenReturn(Optional.of(fleet));
-        when(fleetService.saveFleet(any(Fleet.class))).thenReturn(fleet);
-        
+        Fleet fleetToUpdate = new Fleet();
+        fleetToUpdate.setId("fleet-2");
+        fleetToUpdate.setTs(150L);
+        syncRequest.setUpdate(Arrays.asList(fleetToUpdate));
+
+        Fleet existingFleet = new Fleet();
+        existingFleet.setId("fleet-2");
+        existingFleet.setTs(100L);
+        when(fleetService.getFleet("fleet-2")).thenReturn(Optional.of(existingFleet));
+
         // Act
         SyncResponse response = syncController.sync(request, syncRequest);
 
         // Assert
+        assertEquals(1, response.getRemoved().size());
         assertEquals(1, response.getUpdated().size());
-        assertEquals(fleet.getId(), response.getUpdated().keySet().iterator().next());
-        assertEquals(fleet.getTs(), response.getUpdated().get(fleet.getId()));
-        verify(fleetService).deleteFleet(anyString());
-        verify(fleetService).updateFleet(any(Fleet.class));
-        verify(fleetService).saveFleet(any(Fleet.class));
+        assertEquals("fleet-2", response.getUpdated().keySet().iterator().next());
+        assertEquals(existingFleet.getCreated(), response.getUpdated().get("fleet-2"));
+        
+        verify(fleetService).deleteFleet("fleet-1");
+        verify(fleetService).updateFleet(fleetToUpdate);
+    }
+
+    @Test
+    public void shouldReturnSyncResponseWithGetWhenSyncIsCalled() {
+        // Arrange
+        SyncRequest syncRequest = new SyncRequest();
+        Set<String> getSet = new HashSet<>(Collections.singletonList("fleet-2"));
+        syncRequest.setGet(getSet);
+
+        Fleet existingFleet = new Fleet();
+        existingFleet.setId("fleet-2");
+        existingFleet.setTs(200L);
+        when(fleetService.getFleet("fleet-2")).thenReturn(Optional.of(existingFleet));
+
+        // Act
+        SyncResponse response = syncController.sync(request, syncRequest);
+
+        // Assert
+        assertEquals(1, response.getGet().size());
+        assertEquals("fleet-2", response.getGet().get(0).getId());
+
+        verify(fleetService).getFleet("fleet-2");
     }
 }

@@ -16,7 +16,7 @@ public class HelloControllerTest {
     private HelloController helloController;
 
     @Test
-    public void shouldReturnGreetingMessageWhenIndexIsCalled() {
+    public void shouldReturnGreetingWhenIndexIsCalled() {
         String result = helloController.index();
         assertEquals("Greetings from Spring Boot!", result);
     }
