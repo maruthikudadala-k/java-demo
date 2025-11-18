@@ -32,114 +32,124 @@ public class CrewControllerTest {
 
     @Test
     public void shouldReturnAllCrewWhenGetAllCrewIsCalled() {
+        // Arrange
         MockHttpServletRequest request = new MockHttpServletRequest();
         String organizationId = "org123";
-        request.setUserPrincipal(() -> organizationId);
-        CrewDisplayObject mockDisplayObject = new CrewDisplayObject();
+        int offSet = 0;
+        int limit = 10;
+        CrewDisplayObject expectedCrewDisplayObject = new CrewDisplayObject();
+        when(crewService.findAll(organizationId, offSet, limit)).thenReturn(expectedCrewDisplayObject);
         
-        when(crewService.findAll(organizationId, 0, 10)).thenReturn(mockDisplayObject);
+        // Act
+        CrewDisplayObject actualCrewDisplayObject = crewController.getAllCrew(request, offSet, limit);
 
-        CrewDisplayObject result = crewController.getAllCrew(request, 0, 10);
-        
-        assertNotNull(result);
-        verify(crewService).findAll(organizationId, 0, 10);
+        // Assert
+        assertEquals(expectedCrewDisplayObject, actualCrewDisplayObject);
+        verify(crewService).findAll(organizationId, offSet, limit);
     }
 
     @Test
     public void shouldReturnCrewWhenGetCrewIsCalled() {
-        String crewId = "crew123";
+        // Arrange
         MockHttpServletRequest request = new MockHttpServletRequest();
-        CrewDto mockCrewDto = new CrewDto();
+        String id = "crew123";
+        CrewDto expectedCrewDto = new CrewDto();
+        when(crewService.findById(id)).thenReturn(expectedCrewDto);
         
-        when(crewService.findById(crewId)).thenReturn(mockCrewDto);
+        // Act
+        CrewDto actualCrewDto = crewController.getCrew(request, id);
 
-        CrewDto result = crewController.getCrew(request, crewId);
-        
-        assertNotNull(result);
-        verify(crewService).findById(crewId);
+        // Assert
+        assertEquals(expectedCrewDto, actualCrewDto);
+        verify(crewService).findById(id);
     }
 
     @Test
     public void shouldCreateCrewWhenCreateCrewIsCalled() {
+        // Arrange
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String organizationId = "org123";
-        request.setUserPrincipal(() -> organizationId);
         CrewDto crewDto = new CrewDto();
-        crewDto.setId("crew123");
-        crewDto.setName("Test Crew");
+        String organizationId = "org123";
+        Crew newCrew = new Crew();
         Map<String, String> error = new HashMap<>();
         error.put("errorMessage", Constants.CREW_ALREADY_EXISTS);
-        Crew mockCrew = new Crew();
+        when(crewService.saveCrew(crewDto)).thenReturn(newCrew);
 
-        when(crewService.saveCrew(crewDto)).thenReturn(mockCrew);
+        // Act
+        ResponseEntity<Object> response = crewController.createCrew(request, crewDto);
 
-        ResponseEntity<Object> result = crewController.createCrew(request, crewDto);
-        
-        assertEquals(HttpStatus.CREATED, result.getStatusCode());
-        assertEquals(mockCrew, result.getBody());
+        // Assert
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(newCrew, response.getBody());
         verify(crewService).saveCrew(crewDto);
     }
 
     @Test
     public void shouldReturnConflictWhenCrewAlreadyExists() {
+        // Arrange
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String organizationId = "org123";
-        request.setUserPrincipal(() -> organizationId);
         CrewDto crewDto = new CrewDto();
-        crewDto.setId("crew123");
-        crewDto.setName("Test Crew");
+        String organizationId = "org123";
         Map<String, String> error = new HashMap<>();
         error.put("errorMessage", Constants.CREW_ALREADY_EXISTS);
-
         when(crewService.saveCrew(crewDto)).thenReturn(null);
 
-        ResponseEntity<Object> result = crewController.createCrew(request, crewDto);
-        
-        assertEquals(HttpStatus.CONFLICT, result.getStatusCode());
-        assertEquals(error, result.getBody());
+        // Act
+        ResponseEntity<Object> response = crewController.createCrew(request, crewDto);
+
+        // Assert
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals(error, response.getBody());
         verify(crewService).saveCrew(crewDto);
     }
 
     @Test
-    public void shouldUpdateCrewWhenUpdateCrewIsCalled() {
+    public void shouldUpdateCrewWhenUpdatePersonnelIsCalled() {
+        // Arrange
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String organizationId = "org123";
-        request.setUserPrincipal(() -> organizationId);
         CrewDto crewDto = new CrewDto();
         crewDto.setId("crew123");
-
+        CrewDto expectedCrewDto = new CrewDto();
         when(crewService.updateCrew(crewDto)).thenReturn(true);
-        when(crewService.findById(crewDto.getId())).thenReturn(crewDto);
+        when(crewService.findById(crewDto.getId())).thenReturn(expectedCrewDto);
 
-        CrewDto result = crewController.updatePersonnel(request, crewDto);
-        
-        assertNotNull(result);
+        // Act
+        CrewDto actualCrewDto = crewController.updatePersonnel(request, crewDto);
+
+        // Assert
+        assertEquals(expectedCrewDto, actualCrewDto);
         verify(crewService).updateCrew(crewDto);
         verify(crewService).findById(crewDto.getId());
     }
 
     @Test
     public void shouldDeleteCrewWhenDeleteCrewIsCalled() {
-        String crewId = "crew123";
+        // Arrange
+        String id = "crew123";
 
-        crewController.deleteCrew(crewId);
-        
-        verify(crewService).deleteCrew(crewId);
+        // Act
+        crewController.deleteCrew(id);
+
+        // Assert
+        verify(crewService).deleteCrew(id);
     }
 
     @Test
     public void shouldReturnAllCrewByFleetWhenGetAllCrewByFleetIsCalled() {
+        // Arrange
         MockHttpServletRequest request = new MockHttpServletRequest();
         String organizationId = "org123";
-        request.setUserPrincipal(() -> organizationId);
-        String fleetName = "Fleet A";
-        CrewDisplayObject mockDisplayObject = new CrewDisplayObject();
+        String fleetName = "Fleet1";
+        int offSet = 0;
+        int limit = 10;
+        CrewDisplayObject expectedCrewDisplayObject = new CrewDisplayObject();
+        when(crewService.findAllByFleet(organizationId, fleetName, offSet, limit)).thenReturn(expectedCrewDisplayObject);
         
-        when(crewService.findAllByFleet(organizationId, fleetName, 0, 10)).thenReturn(mockDisplayObject);
+        // Act
+        CrewDisplayObject actualCrewDisplayObject = crewController.getAllCrewByFleet(request, offSet, limit, fleetName);
 
-        CrewDisplayObject result = crewController.getAllCrewByFleet(request, 0, 10, fleetName);
-        
-        assertNotNull(result);
-        verify(crewService).findAllByFleet(organizationId, fleetName, 0, 10);
+        // Assert
+        assertEquals(expectedCrewDisplayObject, actualCrewDisplayObject);
+        verify(crewService).findAllByFleet(organizationId, fleetName, offSet, limit);
     }
 }

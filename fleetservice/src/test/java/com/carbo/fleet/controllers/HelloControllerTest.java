@@ -2,10 +2,9 @@
 package com.carbo.fleet.controllers;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.junit.jupiter.ExtendWith;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -16,7 +15,7 @@ public class HelloControllerTest {
     private HelloController helloController;
 
     @Test
-    public void shouldReturnGreetingMessageWhenIndexIsCalled() {
+    public void shouldReturnGreetingWhenIndexIsCalled() {
         String result = helloController.index();
         assertEquals("Greetings from Spring Boot!", result);
     }
