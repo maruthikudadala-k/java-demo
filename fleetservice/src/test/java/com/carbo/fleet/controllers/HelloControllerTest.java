@@ -10,13 +10,13 @@ import org.mockito.junit.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
-public class HelloControllerTest {
+class HelloControllerTest {
 
     @InjectMocks
     private HelloController helloController;
 
     @Test
-    public void shouldReturnGreetingWhenIndexIsCalled() {
+    void shouldReturnGreetingMessageWhenIndexIsCalled() {
         String result = helloController.index();
         assertEquals("Greetings from Spring Boot!", result);
     }
