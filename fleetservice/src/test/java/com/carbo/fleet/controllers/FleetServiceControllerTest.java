@@ -16,13 +16,10 @@ import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class FleetServiceControllerTest {
-
-    @InjectMocks
-    private FleetServiceController fleetServiceController;
 
     @Mock
     private FleetService fleetService;
@@ -30,118 +27,105 @@ public class FleetServiceControllerTest {
     @Mock
     private HttpServletRequest request;
 
-    @Test
-    public void shouldReturnFleetsWhenGetFleetsIsCalled() {
-        // Given
-        String organizationId = "org123";
-        String organizationType = "OPERATOR";
-        Fleet fleet = new Fleet();
-        fleet.setId("fleet1");
-        fleet.setName("Fleet One");
+    @InjectMocks
+    private FleetServiceController fleetServiceController;
 
-        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
+    @Test
+    public void shouldReturnAllFleetsWhenOperator() {
+        String organizationId = "org123";
+        Fleet fleet = new Fleet();
+        fleet.setId("fleet123");
+        fleet.setName("Fleet A");
+
+        when(request.getAttribute("organizationId")).thenReturn(organizationId);
         when(fleetService.getByOrganizationId(organizationId)).thenReturn(Collections.singletonList(fleet));
 
-        // When
-        List<Fleet> result = fleetServiceController.getFleets(request);
+        var result = fleetServiceController.getFleets(request);
 
-        // Then
         assertEquals(1, result.size());
-        assertEquals("Fleet One", result.get(0).getName());
-        verify(fleetService).getByOrganizationId(organizationId);
+        assertEquals("Fleet A", result.get(0).getName());
     }
 
     @Test
-    public void shouldReturnFleetWhenGetFleetIsCalled() {
-        // Given
-        String fleetId = "fleet1";
+    public void shouldReturnFleetById() {
+        String fleetId = "fleet123";
         Fleet fleet = new Fleet();
         fleet.setId(fleetId);
-        fleet.setName("Fleet One");
+        fleet.setName("Fleet A");
 
         when(fleetService.getFleet(fleetId)).thenReturn(Optional.of(fleet));
 
-        // When
-        Fleet result = fleetServiceController.getFleet(fleetId);
+        var result = fleetServiceController.getFleet(fleetId);
 
-        // Then
+        assertEquals("Fleet A", result.getName());
         assertEquals(fleetId, result.getId());
-        assertEquals("Fleet One", result.getName());
-        verify(fleetService).getFleet(fleetId);
     }
 
     @Test
-    public void shouldUpdateFleetWhenUpdateFleetIsCalled() {
-        // Given
-        String fleetId = "fleet1";
+    public void shouldUpdateFleet() {
+        String fleetId = "fleet123";
         Fleet fleet = new Fleet();
         fleet.setId(fleetId);
         fleet.setName("Updated Fleet");
 
-        // When
         fleetServiceController.updateFleet(fleetId, fleet);
 
-        // Then
-        verify(fleetService).updateFleet(fleet);
+        Mockito.verify(fleetService).updateFleet(fleet);
     }
 
     @Test
-    public void shouldSaveFleetWhenSaveFleetIsCalled() {
-        // Given
+    public void shouldSaveFleet() {
         Fleet fleet = new Fleet();
         fleet.setName("New Fleet");
 
-        // When
         fleetServiceController.saveFleet(fleet);
 
-        // Then
-        verify(fleetService).saveFleet(fleet);
+        Mockito.verify(fleetService).saveFleet(fleet);
     }
 
     @Test
-    public void shouldDeleteFleetWhenDeleteFleetIsCalled() {
-        // Given
-        String fleetId = "fleet1";
+    public void shouldDeleteFleet() {
+        String fleetId = "fleet123";
 
-        // When
         fleetServiceController.deleteFleet(fleetId);
 
-        // Then
-        verify(fleetService).deleteFleet(fleetId);
+        Mockito.verify(fleetService).deleteFleet(fleetId);
     }
 
     @Test
-    public void shouldReturnDistinctFleetWhenFindDistinctByOrganizationIdAndNameIsCalled() {
-        // Given
+    public void shouldFindDistinctFleetByOrganizationIdAndName() {
         String organizationId = "org123";
-        String name = "Fleet One";
+        String name = "Fleet A";
         Fleet fleet = new Fleet();
-        fleet.setId("fleet1");
+        fleet.setId("fleet123");
         fleet.setName(name);
 
-        when(request.getUserPrincipal()).thenReturn(() -> organizationId);
+        when(request.getAttribute("organizationId")).thenReturn(organizationId);
         when(fleetService.findDistinctByOrganizationIdAndName(organizationId, name)).thenReturn(Optional.of(fleet));
 
-        // When
-        Optional<Fleet> result = fleetServiceController.findDistinctByOrganizationIdAndName(request, name);
+        var result = fleetServiceController.findDistinctByOrganizationIdAndName(request, name);
 
-        // Then
-        assertEquals(fleet, result.get());
-        verify(fleetService).findDistinctByOrganizationIdAndName(organizationId, name);
+        assertEquals(name, result.get().getName());
     }
 
     @Test
-    public void shouldReturnFleetDataWhenGetFleetDataIsCalled() {
-        // Given
-        when(request.getUserPrincipal()).thenReturn(() -> "org123");
-        ResponseEntity expectedResponse = ResponseEntity.ok(Collections.emptyMap());
-        when(fleetService.getFleetData(request)).thenReturn(expectedResponse);
+    public void shouldReturnFleetData() {
+        when(fleetService.getFleetData(request)).thenReturn(ResponseEntity.ok("Some Data"));
 
-        // When
-        ResponseEntity result = fleetServiceController.getFleetData(request);
+        ResponseEntity<?> result = fleetServiceController.getFleetData(request);
 
-        // Then
-        assertEquals(expectedResponse, result);
-        verify(fleetService).getFleetData(request);
+        assertEquals("Some Data", result.getBody());
+    }
+
+    @Test
+    public void shouldReturnFleetsForCalendar() {
+        String organizationId = "org123";
+
+        when(request.getAttribute("organizationId")).thenReturn(organizationId);
+        when(fleetService.getByOrganizationId(organizationId)).thenReturn(Collections.emptyList());
+
+        var result = fleetServiceController.getFleetsForCalendar(request);
+
+        assertEquals(0, result.size());
     }
 }

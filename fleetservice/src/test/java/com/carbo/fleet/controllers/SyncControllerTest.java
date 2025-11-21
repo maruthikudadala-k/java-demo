@@ -18,7 +18,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class SyncControllerTest {
@@ -36,12 +37,12 @@ public class SyncControllerTest {
         String organizationId = "org123";
         Fleet fleet1 = new Fleet();
         fleet1.setId("fleet1");
-        fleet1.setTs(100L);
+        fleet1.setTs(123L);
         Fleet fleet2 = new Fleet();
         fleet2.setId("fleet2");
-        fleet2.setTs(200L);
+        fleet2.setTs(456L);
         List<Fleet> fleets = Arrays.asList(fleet1, fleet2);
-        
+
         when(fleetService.getByOrganizationId(organizationId)).thenReturn(fleets);
         request.setAttribute("organizationId", organizationId);
 
@@ -49,10 +50,9 @@ public class SyncControllerTest {
         Map<String, Long> result = syncController.view(request);
 
         // Assert
-        Map<String, Long> expected = new HashMap<>();
-        expected.put("fleet1", 100L);
-        expected.put("fleet2", 200L);
-        assertEquals(expected, result);
+        assertEquals(2, result.size());
+        assertEquals(123L, result.get("fleet1"));
+        assertEquals(456L, result.get("fleet2"));
     }
 
     @Test
@@ -60,24 +60,27 @@ public class SyncControllerTest {
         // Arrange
         MockHttpServletRequest request = new MockHttpServletRequest();
         String organizationId = "org123";
+        request.addHeader("Authorization", "Bearer token");
         SyncRequest syncRequest = new SyncRequest();
-        Fleet fleet = new Fleet();
-        fleet.setId("fleet1");
-        fleet.setOrganizationId(organizationId);
-        fleet.setTs(100L);
-        syncRequest.setUpdate(Collections.singletonList(fleet));
-        SyncResponse expectedResponse = new SyncResponse();
-        expectedResponse.setUpdated(Collections.singletonMap("fleet1", System.currentTimeMillis()));
-        
-        when(fleetService.saveFleet(Mockito.any(Fleet.class))).thenReturn(fleet);
-        when(fleetService.getByOrganizationId(organizationId)).thenReturn(Collections.singletonList(fleet));
-        request.setAttribute("organizationId", organizationId);
+        List<Fleet> updateList = new ArrayList<>();
+        Fleet fleetToUpdate = new Fleet();
+        fleetToUpdate.setId("fleet1");
+        fleetToUpdate.setTs(1000L);
+        updateList.add(fleetToUpdate);
+        syncRequest.setUpdate(updateList);
+        Map<String, Long> updatedMap = new HashMap<>();
+        updatedMap.put("fleet1", 1000L);
+
+        when(fleetService.getFleet("fleet1")).thenReturn(Optional.of(fleetToUpdate));
+        when(fleetService.saveFleet(any(Fleet.class))).thenReturn(fleetToUpdate);
+        when(fleetService.deleteFleet(anyString())).thenReturn(null);
 
         // Act
-        SyncResponse result = syncController.sync(request, syncRequest);
+        SyncResponse response = syncController.sync(request, syncRequest);
 
         // Assert
-        assertEquals(expectedResponse.getUpdated(), result.getUpdated());
-        assertEquals(expectedResponse.getGet(), result.getGet());
+        assertEquals(updatedMap, response.getUpdated());
+        assertEquals(Collections.emptySet(), response.getRemoved());
+        assertEquals(Collections.emptyList(), response.getGet());
     }
 }
