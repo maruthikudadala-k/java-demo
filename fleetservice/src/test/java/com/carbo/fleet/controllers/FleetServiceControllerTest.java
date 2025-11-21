@@ -31,39 +31,41 @@ public class FleetServiceControllerTest {
     private FleetServiceController fleetServiceController;
 
     @Test
-    public void shouldReturnAllFleetsWhenOperator() {
+    public void shouldReturnFleetsWhenGetFleetsCalled() {
         String organizationId = "org123";
+        String organizationType = "OPERATOR";
         Fleet fleet = new Fleet();
-        fleet.setId("fleet123");
-        fleet.setName("Fleet A");
+        fleet.setId("fleet1");
+        fleet.setName("Test Fleet");
 
         when(request.getAttribute("organizationId")).thenReturn(organizationId);
+        when(request.getAttribute("organizationType")).thenReturn(organizationType);
         when(fleetService.getByOrganizationId(organizationId)).thenReturn(Collections.singletonList(fleet));
 
         var result = fleetServiceController.getFleets(request);
 
         assertEquals(1, result.size());
-        assertEquals("Fleet A", result.get(0).getName());
+        assertEquals("Test Fleet", result.get(0).getName());
     }
 
     @Test
-    public void shouldReturnFleetById() {
-        String fleetId = "fleet123";
+    public void shouldReturnFleetWhenGetFleetByIdCalled() {
+        String fleetId = "fleet1";
         Fleet fleet = new Fleet();
         fleet.setId(fleetId);
-        fleet.setName("Fleet A");
+        fleet.setName("Test Fleet");
 
         when(fleetService.getFleet(fleetId)).thenReturn(Optional.of(fleet));
 
         var result = fleetServiceController.getFleet(fleetId);
 
-        assertEquals("Fleet A", result.getName());
         assertEquals(fleetId, result.getId());
+        assertEquals("Test Fleet", result.getName());
     }
 
     @Test
-    public void shouldUpdateFleet() {
-        String fleetId = "fleet123";
+    public void shouldUpdateFleetWhenUpdateFleetCalled() {
+        String fleetId = "fleet1";
         Fleet fleet = new Fleet();
         fleet.setId(fleetId);
         fleet.setName("Updated Fleet");
@@ -74,7 +76,7 @@ public class FleetServiceControllerTest {
     }
 
     @Test
-    public void shouldSaveFleet() {
+    public void shouldSaveFleetWhenSaveFleetCalled() {
         Fleet fleet = new Fleet();
         fleet.setName("New Fleet");
 
@@ -84,8 +86,8 @@ public class FleetServiceControllerTest {
     }
 
     @Test
-    public void shouldDeleteFleet() {
-        String fleetId = "fleet123";
+    public void shouldDeleteFleetWhenDeleteFleetCalled() {
+        String fleetId = "fleet1";
 
         fleetServiceController.deleteFleet(fleetId);
 
@@ -93,11 +95,11 @@ public class FleetServiceControllerTest {
     }
 
     @Test
-    public void shouldFindDistinctFleetByOrganizationIdAndName() {
+    public void shouldReturnOptionalFleetWhenFindDistinctByOrganizationIdAndNameCalled() {
         String organizationId = "org123";
-        String name = "Fleet A";
+        String name = "Test Fleet";
         Fleet fleet = new Fleet();
-        fleet.setId("fleet123");
+        fleet.setId("fleet1");
         fleet.setName(name);
 
         when(request.getAttribute("organizationId")).thenReturn(organizationId);
@@ -105,27 +107,34 @@ public class FleetServiceControllerTest {
 
         var result = fleetServiceController.findDistinctByOrganizationIdAndName(request, name);
 
+        assertEquals(fleet.getId(), result.get().getId());
         assertEquals(name, result.get().getName());
     }
 
     @Test
-    public void shouldReturnFleetData() {
-        when(fleetService.getFleetData(request)).thenReturn(ResponseEntity.ok("Some Data"));
+    public void shouldReturnResponseEntityWhenGetFleetDataCalled() {
+        when(fleetService.getFleetData(request)).thenReturn(ResponseEntity.ok().build());
 
-        ResponseEntity<?> result = fleetServiceController.getFleetData(request);
+        ResponseEntity<?> response = fleetServiceController.getFleetData(request);
 
-        assertEquals("Some Data", result.getBody());
+        assertEquals(ResponseEntity.ok().build(), response);
     }
 
     @Test
-    public void shouldReturnFleetsForCalendar() {
+    public void shouldReturnFleetsForCalendarWhenGetFleetsForCalendarCalled() {
         String organizationId = "org123";
+        String organizationType = "OPERATOR";
+        Fleet fleet = new Fleet();
+        fleet.setId("fleet1");
+        fleet.setName("Calendar Fleet");
 
         when(request.getAttribute("organizationId")).thenReturn(organizationId);
-        when(fleetService.getByOrganizationId(organizationId)).thenReturn(Collections.emptyList());
+        when(request.getAttribute("organizationType")).thenReturn(organizationType);
+        when(fleetService.getByOrganizationId(organizationId)).thenReturn(Collections.singletonList(fleet));
 
         var result = fleetServiceController.getFleetsForCalendar(request);
 
-        assertEquals(0, result.size());
+        assertEquals(1, result.size());
+        assertEquals("Calendar Fleet", result.get(0).getName());
     }
 }

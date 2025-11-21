@@ -16,8 +16,11 @@ public class HelloControllerTest {
     private HelloController helloController;
 
     @Test
-    public void shouldReturnGreetingMessageWhenIndexIsCalled() {
+    public void shouldReturnGreetingsWhenIndexIsCalled() {
+        // Act
         String result = helloController.index();
+
+        // Assert
         assertEquals("Greetings from Spring Boot!", result);
     }
 }
