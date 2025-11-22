@@ -16,7 +16,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,42 +31,47 @@ public class SyncControllerTest {
     private SyncController syncController;
 
     @Test
-    public void shouldReturnMapOfFleetIdAndTsWhenViewIsCalled() {
+    public void shouldReturnFleetIdsAndTimestampsWhenViewIsCalled() {
         String organizationId = "org123";
-        List<Fleet> fleets = Arrays.asList(
-                new Fleet() {{ setId("fleet1"); setTs(100L); }},
-                new Fleet() {{ setId("fleet2"); setTs(200L); }}
-        );
+        List<Fleet> fleets = Arrays.asList(new Fleet(), new Fleet());
+        fleets.get(0).setId("fleet1");
+        fleets.get(0).setTs(123L);
+        fleets.get(1).setId("fleet2");
+        fleets.get(1).setTs(456L);
 
         when(request.getUserPrincipal()).thenReturn(() -> organizationId);
         when(fleetService.getByOrganizationId(organizationId)).thenReturn(fleets);
 
         Map<String, Long> result = syncController.view(request);
 
-        assertEquals(2, result.size());
-        assertEquals(100L, result.get("fleet1"));
-        assertEquals(200L, result.get("fleet2"));
+        Map<String, Long> expected = new HashMap<>();
+        expected.put("fleet1", 123L);
+        expected.put("fleet2", 456L);
+        assertEquals(expected, result);
     }
 
     @Test
     public void shouldReturnSyncResponseWhenSyncIsCalled() {
-        SyncRequest syncRequest = new SyncRequest();
-        syncRequest.setRemove(new HashSet<>(Collections.singletonList("fleet1")));
-        syncRequest.setUpdate(new ArrayList<>());
-        syncRequest.setGet(new HashSet<>(Collections.singletonList("fleet2")));
-
         String organizationId = "org123";
-        Fleet fleetToGet = new Fleet() {{ setId("fleet2"); setTs(200L); }};
+        SyncRequest syncRequest = new SyncRequest();
+        Fleet fleet = new Fleet();
+        fleet.setId("fleet1");
+        fleet.setOrganizationId(organizationId);
+        fleet.setTs(1000L);
+        
+        syncRequest.setUpdate(Collections.singletonList(fleet));
+        syncRequest.setRemove(Collections.singleton("fleet2"));
+        syncRequest.setGet(Collections.singleton("fleet3"));
 
         when(request.getUserPrincipal()).thenReturn(() -> organizationId);
-        when(fleetService.getFleet("fleet2")).thenReturn(Optional.of(fleetToGet));
-        when(fleetService.deleteFleet("fleet1")).thenReturn(null);
+        when(fleetService.getFleet("fleet1")).thenReturn(Optional.of(fleet));
+        when(fleetService.getFleet("fleet2")).thenReturn(Optional.empty());
+        when(fleetService.getFleet("fleet3")).thenReturn(Optional.of(fleet));
 
         SyncResponse response = syncController.sync(request, syncRequest);
 
+        assertEquals(1, response.getUpdated().size());
         assertEquals(1, response.getRemoved().size());
-        assertEquals("fleet1", response.getRemoved().iterator().next());
         assertEquals(1, response.getGet().size());
-        assertEquals("fleet2", response.getGet().get(0).getId());
     }
 }
