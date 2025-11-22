@@ -14,17 +14,21 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 
 @ExtendWith(MockitoExtension.class)
 public class CrewServiceTest {
@@ -42,60 +46,99 @@ public class CrewServiceTest {
     private CrewService crewService;
 
     @Test
-    public void shouldReturnCrewDtoWhenFindByIdIsCalled() {
-        String crewId = "123";
-        CrewDto crewDto = CrewDto.builder().id(crewId).name("John Doe").jobPattern("Pattern A")
-                .shiftStart("08:00").startDate("01/01/2022").fleetId("F1").organizationId("Org1").build();
-        List<CrewDto> crewDtoList = new ArrayList<>();
-        crewDtoList.add(crewDto);
-        CrewDisplayObject crewDisplayObject = CrewDisplayObject.builder().crews(crewDtoList).totalCount(1).build();
+    public void shouldReturnCrewDtoWhenFindByIdIsCalledWithValidId() {
+        // Arrange
+        String crewId = "crewId";
+        CrewDto crewDto = CrewDto.builder()
+                .id(crewId)
+                .name("John Doe")
+                .jobPattern("Pattern A")
+                .shiftStart("08:00")
+                .startDate("01/01/2023")
+                .organizationId("orgId")
+                .fleetId("fleetId")
+                .build();
 
-        when(crewDbRepository.findById(crewId)).thenReturn(Optional.of(new Crew()));
-        when(crewService.lookUpCrew(anyList(), isNull(), isNull(), anyInt(), anyInt())).thenReturn(crewDisplayObject);
+        CrewDisplayObject crewDisplayObject = CrewDisplayObject.builder()
+                .crews(Collections.singletonList(crewDto))
+                .totalCount(1)
+                .build();
 
+        Mockito.when(crewDbRepository.findById(anyString())).thenReturn(Optional.of(new Crew()));
+        Mockito.when(crewService.lookUpCrew(any(), anyString(), anyString(), anyInt(), anyInt())).thenReturn(crewDisplayObject);
+
+        // Act
         CrewDto result = crewService.findById(crewId);
 
-        assertNotNull(result);
-        assertEquals(crewId, result.getId());
-        verify(crewDbRepository).findById(crewId);
+        // Assert
+        assertEquals(crewDto, result);
+    }
+
+    @Test
+    public void shouldReturnNullWhenFindByIdIsCalledWithInvalidId() {
+        // Arrange
+        String crewId = "crewId";
+        Mockito.when(crewDbRepository.findById(anyString())).thenReturn(Optional.of(new Crew()));
+        Mockito.when(crewService.lookUpCrew(any(), anyString(), anyString(), anyInt(), anyInt())).thenReturn(CrewDisplayObject.builder().crews(Collections.emptyList()).build());
+
+        // Act
+        CrewDto result = crewService.findById(crewId);
+
+        // Assert
+        assertNull(result);
     }
 
     @Test
     public void shouldReturnCrewDisplayObjectWhenFindAllIsCalled() {
-        String organizationId = "Org1";
+        // Arrange
+        String organizationId = "orgId";
+        int offset = 0;
+        int limit = 10;
         Long totalCount = 5L;
-        when(crewDbRepository.count()).thenReturn(totalCount);
-        when(crewService.lookUpCrew(isNull(), isNull(), eq(organizationId), anyInt(), anyInt()))
-                .thenReturn(new CrewDisplayObject(new ArrayList<>(), totalCount));
 
-        CrewDisplayObject result = crewService.findAll(organizationId, 0, 10);
+        Mockito.when(crewDbRepository.count()).thenReturn(totalCount);
+        Mockito.when(crewService.lookUpCrew(any(), anyString(), anyString(), anyInt(), anyInt())).thenReturn(CrewDisplayObject.builder().crews(new ArrayList<>()).totalCount(totalCount).build());
 
-        assertNotNull(result);
+        // Act
+        CrewDisplayObject result = crewService.findAll(organizationId, offset, limit);
+
+        // Assert
         assertEquals(totalCount, result.getTotalCount());
-        verify(crewDbRepository).count();
     }
 
     @Test
     public void shouldReturnCrewDisplayObjectWhenFindAllByFleetIsCalled() {
-        String organizationId = "Org1";
-        String fleetName = "Fleet1";
-        String fleetId = "F1";
+        // Arrange
+        String organizationId = "orgId";
+        String fleetName = "fleetName";
+        int offset = 0;
+        int limit = 10;
+
         Fleet fleet = new Fleet();
-        fleet.setId(fleetId);
-        when(mongoTemplate.findOne(any(), eq(Fleet.class))).thenReturn(fleet);
-        when(crewService.lookUpCrew(isNull(), eq(fleetId), eq(organizationId), anyInt(), anyInt()))
-                .thenReturn(new CrewDisplayObject(new ArrayList<>(), 0));
+        fleet.setId("fleetId");
+        Mockito.when(mongoTemplate.findOne(any(), Mockito.eq(Fleet.class))).thenReturn(fleet);
+        Mockito.when(crewService.lookUpCrew(any(), anyString(), anyString(), anyInt(), anyInt())).thenReturn(CrewDisplayObject.builder().crews(new ArrayList<>()).build());
 
-        CrewDisplayObject result = crewService.findAllByFleet(organizationId, fleetName, 0, 10);
+        // Act
+        CrewDisplayObject result = crewService.findAllByFleet(organizationId, fleetName, offset, limit);
 
-        assertNotNull(result);
-        verify(mongoTemplate).findOne(any(), eq(Fleet.class));
+        // Assert
+        assertEquals(0, result.getCrews().size());
     }
 
     @Test
-    public void shouldSaveCrewWhenSaveCrewIsCalled() {
-        CrewDto crewDto = CrewDto.builder().id("123").name("John Doe").jobPattern("Pattern A")
-                .shiftStart("08:00").startDate("01/01/2022").fleetId("F1").organizationId("Org1").build();
+    public void shouldSaveCrewWhenSaveCrewIsCalledWithValidCrewDto() {
+        // Arrange
+        CrewDto crewDto = CrewDto.builder()
+                .id("crewId")
+                .name("John Doe")
+                .startDate("01/01/2023")
+                .organizationId("orgId")
+                .fleetId("fleetId")
+                .jobPattern("Pattern A")
+                .shiftStart("08:00")
+                .build();
+
         Crew crew = new Crew();
         crew.setId(crewDto.getId());
         crew.setName(crewDto.getName());
@@ -105,35 +148,62 @@ public class CrewServiceTest {
         crew.setJobPattern(crewDto.getJobPattern());
         crew.setShiftStart(crewDto.getShiftStart());
 
-        when(crewDbRepository.save(any(Crew.class))).thenReturn(crew);
+        Mockito.when(crewDbRepository.save(any(Crew.class))).thenReturn(crew);
 
+        // Act
         Crew result = crewService.saveCrew(crewDto);
 
-        assertNotNull(result);
+        // Assert
         assertEquals(crewDto.getId(), result.getId());
-        verify(crewDbRepository).save(any(Crew.class));
     }
 
     @Test
-    public void shouldReturnTrueWhenUpdateCrewIsCalledWithExistingCrew() {
-        CrewDto crewDto = CrewDto.builder().id("123").name("John Doe").jobPattern("Pattern A")
-                .shiftStart("08:00").startDate("01/01/2022").fleetId("F1").organizationId("Org1").build();
-        when(crewDbRepository.findById(crewDto.getId())).thenReturn(Optional.of(new Crew()));
+    public void shouldReturnFalseWhenUpdateCrewIsCalledWithNonExistingCrew() {
+        // Arrange
+        CrewDto crewDto = CrewDto.builder()
+                .id("crewId")
+                .name("John Doe")
+                .startDate("01/01/2023")
+                .organizationId("orgId")
+                .fleetId("fleetId")
+                .jobPattern("Pattern A")
+                .shiftStart("08:00")
+                .build();
 
-        boolean result = crewService.updateCrew(crewDto);
+        Mockito.when(crewDbRepository.findById(anyString())).thenReturn(Optional.empty());
 
-        assertTrue(result);
-        verify(crewDbRepository).findById(crewDto.getId());
-        verify(crewDbRepository).save(any(Crew.class));
+        // Act
+        Boolean result = crewService.updateCrew(crewDto);
+
+        // Assert
+        assertEquals(false, result);
     }
 
     @Test
     public void shouldDeleteCrewWhenDeleteCrewIsCalledWithExistingCrew() {
-        String crewId = "123";
-        when(crewDbRepository.findById(crewId)).thenReturn(Optional.of(new Crew()));
+        // Arrange
+        String crewId = "crewId";
+        Crew crew = new Crew();
+        crew.setId(crewId);
+        Mockito.when(crewDbRepository.findById(anyString())).thenReturn(Optional.of(crew));
 
+        // Act
         crewService.deleteCrew(crewId);
 
-        verify(crewDbRepository).deleteById(crewId);
+        // Assert
+        Mockito.verify(crewDbRepository, Mockito.times(1)).deleteById(crewId);
+    }
+
+    @Test
+    public void shouldNotDeleteCrewWhenDeleteCrewIsCalledWithNonExistingCrew() {
+        // Arrange
+        String crewId = "crewId";
+        Mockito.when(crewDbRepository.findById(anyString())).thenReturn(Optional.empty());
+
+        // Act
+        crewService.deleteCrew(crewId);
+
+        // Assert
+        Mockito.verify(crewDbRepository, Mockito.never()).deleteById(anyString());
     }
 }

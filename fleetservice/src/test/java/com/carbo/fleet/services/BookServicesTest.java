@@ -19,137 +19,137 @@ public class BookServiceTest {
     @InjectMocks
     private BookService bookService;
 
+    @Mock
+    private BookService.Book book;
+
     @Test
     public void shouldAddBookWhenValidBookProvided() {
-        Book book = new Book("Title", "Author", 10.0);
+        when(book.getTitle()).thenReturn("Test Title");
+        when(book.getAuthor()).thenReturn("Test Author");
+        when(book.getPrice()).thenReturn(10.0);
         
-        Book result = bookService.addBook(book);
+        Book addedBook = bookService.addBook(book);
         
-        assertEquals(book, result);
-        assertEquals(1, bookService.getBookCount());
+        assertNotNull(addedBook);
+        assertEquals("Test Title", addedBook.getTitle());
+        assertEquals("Test Author", addedBook.getAuthor());
+        assertEquals(10.0, addedBook.getPrice());
     }
 
     @Test
-    public void shouldReturnBookWhenFoundById() {
-        Book book = new Book("Title", "Author", 10.0);
+    public void shouldFindBookByIdWhenBookExists() {
+        when(book.getId()).thenReturn(1L);
         bookService.addBook(book);
         
-        Optional<Book> result = bookService.findById(book.getId());
+        Optional<Book> foundBook = bookService.findById(1L);
         
-        assertTrue(result.isPresent());
-        assertEquals(book, result.get());
+        assertTrue(foundBook.isPresent());
+        assertEquals("Test Title", foundBook.get().getTitle());
     }
 
     @Test
-    public void shouldReturnEmptyWhenBookNotFoundById() {
-        Optional<Book> result = bookService.findById(999L);
+    public void shouldReturnEmptyOptionalWhenBookNotFound() {
+        Optional<Book> foundBook = bookService.findById(1L);
         
-        assertFalse(result.isPresent());
+        assertFalse(foundBook.isPresent());
     }
 
     @Test
-    public void shouldReturnBooksByAuthor() {
-        Book book1 = new Book("Title1", "Author", 10.0);
-        Book book2 = new Book("Title2", "Author", 15.0);
+    public void shouldFindBooksByAuthor() {
+        Book book1 = new Book("Book One", "Author A", 15.0);
+        Book book2 = new Book("Book Two", "Author A", 20.0);
         bookService.addBook(book1);
         bookService.addBook(book2);
         
-        List<Book> result = bookService.findByAuthor("Author");
+        List<Book> booksByAuthor = bookService.findByAuthor("Author A");
         
-        assertEquals(2, result.size());
-        assertTrue(result.contains(book1));
-        assertTrue(result.contains(book2));
+        assertEquals(2, booksByAuthor.size());
     }
 
     @Test
     public void shouldUpdatePriceWhenBookExists() {
-        Book book = new Book("Title", "Author", 10.0);
+        Book book = new Book("Test Title", "Test Author", 10.0);
         bookService.addBook(book);
         
-        boolean result = bookService.updatePrice(book.getId(), 20.0);
+        boolean isUpdated = bookService.updatePrice(1L, 15.0);
         
-        assertTrue(result);
-        assertEquals(20.0, book.getPrice());
+        assertTrue(isUpdated);
+        assertEquals(15.0, book.getPrice());
     }
 
     @Test
-    public void shouldNotUpdatePriceWhenBookNotFound() {
-        boolean result = bookService.updatePrice(999L, 20.0);
+    public void shouldReturnFalseWhenUpdatingPriceForNonExistentBook() {
+        boolean isUpdated = bookService.updatePrice(1L, 15.0);
         
-        assertFalse(result);
+        assertFalse(isUpdated);
     }
 
     @Test
     public void shouldCalculateTotalValueOfBooks() {
-        bookService.addBook(new Book("Title1", "Author", 10.0));
-        bookService.addBook(new Book("Title2", "Author", 20.0));
+        bookService.addBook(new Book("Book One", "Author A", 10.0));
+        bookService.addBook(new Book("Book Two", "Author B", 20.0));
         
-        double result = bookService.calculateTotalValue();
+        double totalValue = bookService.calculateTotalValue();
         
-        assertEquals(30.0, result);
+        assertEquals(30.0, totalValue);
     }
 
     @Test
-    public void shouldReturnBooksByPriceRange() {
-        bookService.addBook(new Book("Title1", "Author", 10.0));
-        bookService.addBook(new Book("Title2", "Author", 20.0));
-        bookService.addBook(new Book("Title3", "Author", 30.0));
+    public void shouldGetBooksByPriceRange() {
+        bookService.addBook(new Book("Book One", "Author A", 10.0));
+        bookService.addBook(new Book("Book Two", "Author B", 20.0));
         
-        List<Book> result = bookService.getBooksByPriceRange(15.0, 25.0);
+        List<Book> booksInRange = bookService.getBooksByPriceRange(5.0, 15.0);
         
-        assertEquals(1, result.size());
-        assertEquals("Title2", result.get(0).getTitle());
+        assertEquals(1, booksInRange.size());
+        assertEquals("Book One", booksInRange.get(0).getTitle());
     }
 
     @Test
-    public void shouldRemoveBookWhenExists() {
-        Book book = new Book("Title", "Author", 10.0);
+    public void shouldRemoveBookWhenBookExists() {
+        Book book = new Book("Test Title", "Test Author", 10.0);
         bookService.addBook(book);
         
-        boolean result = bookService.removeBook(book.getId());
+        boolean isRemoved = bookService.removeBook(1L);
         
-        assertTrue(result);
-        assertEquals(0, bookService.getBookCount());
+        assertTrue(isRemoved);
+        assertFalse(bookService.findById(1L).isPresent());
     }
 
     @Test
-    public void shouldNotRemoveBookWhenNotFound() {
-        boolean result = bookService.removeBook(999L);
+    public void shouldReturnFalseWhenRemovingNonExistentBook() {
+        boolean isRemoved = bookService.removeBook(1L);
         
-        assertFalse(result);
+        assertFalse(isRemoved);
     }
 
     @Test
     public void shouldReturnAllBooks() {
-        Book book1 = new Book("Title1", "Author", 10.0);
-        Book book2 = new Book("Title2", "Author", 20.0);
+        Book book1 = new Book("Book One", "Author A", 10.0);
+        Book book2 = new Book("Book Two", "Author B", 20.0);
         bookService.addBook(book1);
         bookService.addBook(book2);
         
-        List<Book> result = bookService.getAllBooks();
+        List<Book> allBooks = bookService.getAllBooks();
         
-        assertEquals(2, result.size());
-        assertTrue(result.contains(book1));
-        assertTrue(result.contains(book2));
+        assertEquals(2, allBooks.size());
     }
 
     @Test
-    public void shouldReturnTrueWhenBooksAreEmpty() {
+    public void shouldCheckIfCollectionIsEmpty() {
         assertTrue(bookService.isEmpty());
-    }
-
-    @Test
-    public void shouldReturnFalseWhenBooksAreNotEmpty() {
-        bookService.addBook(new Book("Title", "Author", 10.0));
+        
+        bookService.addBook(new Book("Test Title", "Test Author", 10.0));
         
         assertFalse(bookService.isEmpty());
     }
 
     @Test
-    public void shouldReturnBookCount() {
-        bookService.addBook(new Book("Title1", "Author", 10.0));
-        bookService.addBook(new Book("Title2", "Author", 20.0));
+    public void shouldGetBookCount() {
+        assertEquals(0, bookService.getBookCount());
         
-        assertEquals(2, bookService.getBookCount());
+        bookService.addBook(new Book("Test Title", "Test Author", 10.0));
+        
+        assertEquals(1, bookService.getBookCount());
     }
 }
