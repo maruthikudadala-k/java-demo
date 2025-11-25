@@ -3522,3 +3522,822 @@ Scenario Outline: User Registration Fails with Invalid Password Characters
   Examples:
     | email                | password     | confirmation   |
     | krishna@gmail.com    | !@#$%^&*     | !@#$%^&*       |
+
+  @valid-registration
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    When the user enters "<email>"
+    And the user enters "<password>"
+    And the user confirms the password in the confirmation field
+    And the user clicks the "Register" button
+    Then the system creates the account and displays a success message
+    And the user is redirected to the login page
+
+    Examples:
+      | email               | password      |
+      | krishna@gmail.com   | Password123   |
+
+  @valid-registration
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation>" in the confirmation field
+    And the user clicks the "Register" button
+    Then the user should be redirected to the success page
+    And the user should receive a confirmation email in the inbox
+
+    Examples:
+      | email              | password             | confirmation         |
+      | krishna@gmail.com  | ValidPassword123!    | ValidPassword123!     |
+
+  @valid-email_registration
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I enter "<password>"
+    And I confirm the password "<confirmation>"
+    And I click the "Register" button
+    Then the success message is displayed on the screen
+
+    Examples:
+      | email               | password            | confirmation        |
+      | krishna@gmail.com   | ValidPassword123    | ValidPassword123     |
+
+  @valid-registration
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I enter "<password>"
+    And I confirm the password "<confirm_password>"
+    And I click the "Register" button
+    Then the system should display a success message
+    And the user should be redirected to the login page
+
+    Examples:
+      | email                     | password        | confirm_password  |
+      | uniqueuser@example.com    | Password123!    | Password123!      |
+
+  @validate_fields
+  Scenario Outline: User Registration Process
+    When I navigate to the registration page
+    Then the registration page loads successfully
+    And the email field is visible and accessible
+    And the password field is visible and accessible
+    And the confirmation password field is visible and accessible
+    When I enter a unique email address "<email>"
+    And I enter a valid password "<password>"
+    Then the email field accepts the unique email format
+    And the password field accepts the valid password
+
+    Examples:
+      | email                | password            |
+      | <email>             | <password>         |
+      | krishna@gmail.com    | ValidPassword123    |
+
+  @unique-email-registration
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation>" in the confirmation field
+    And the user clicks the Register button
+    Then the user should see a success message displayed on the screen
+
+    Examples:
+      | email               | password              | confirmation         |
+      | krishna@gmail.com   | ValidPassword123      | ValidPassword123      |
+
+  @valid-registration
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I confirm the password "<confirmation>" in the confirmation field
+    And I click the "Register" button
+    Then the success message should be displayed on the screen
+
+    Examples:
+      | email                | password              | confirmation          |
+      | krishna@gmail.com    | SecurePassword123     | SecurePassword123      |
+
+  @valid-registration
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    When I enter a unique email address "<email>"
+    And I enter a valid password "<password>"
+    And I enter the same password in the confirmation field "<confirmation>"
+    And I click the "Register" button
+    Then the user should see a success message displayed on the screen
+
+    Examples:
+      | email              | password            | confirmation        |
+      | <email>           | <password>         | <confirmation>      |
+      | krishna@gmail.com  | ValidPassword123    | ValidPassword123     |
+
+  @valid-registration
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    When I enter a unique email address "<email>"
+    And I enter a password that meets the maximum length requirement "<password>"
+    And I confirm the password "<confirmation>"
+    And I click the "Register" button
+    Then the user should see a success message
+    And the user should be redirected to the Login Page
+
+    Examples:
+      | email               | password                                         | confirmation                                     |
+      | krishna@gmail.com   | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+
+  @valid-registration
+  Scenario Outline: User Registration Process
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation_password>" in the confirmation field
+    And the user clicks the "Register" button
+    Then the user should see the success message displayed on the screen
+    And the user should be redirected to the login page
+
+    Examples:
+      | email              | password        | confirmation_password |
+      | krishna@gmail.com  | Password123!    | Password123!          |
+
+  @successful-registration
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation_password>" in the confirmation field
+    And I click the "Register" button
+    Then the user should receive a confirmation email in the inbox
+
+    Examples:
+      | email               | password               | confirmation_password  |
+      | krishna@gmail.com   | ValidPassword123!      | ValidPassword123!      |
+
+  @valid-registration
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I enter "<password>"
+    And I confirm the password "<confirmation>"
+    And the user clicks the "Register" button
+    Then the user should see a success message
+    And the user is redirected to the login page
+
+    Examples:
+      | email                 | password               | confirmation          |
+      | krishna@gmail.com     | ValidPassword123!      | ValidPassword123!      |
+
+  @focus_email_and_password_fields
+  Scenario Outline: User Registration Process
+    When I navigate to the registration page
+    And I use the Tab key to focus on the email field
+    And I enter "<email>" in the email field
+    And I use the Tab key to focus on the password field
+    And I enter "<password>" in the password field
+    And I use the Tab key to focus on the confirmation password field
+    Then the user should be able to focus on the confirmation password field
+
+    Examples:
+      | email                | password            |
+      | krishna@gmail.com    | ValidPassword123    |
+
+  @valid-registration
+  Scenario Outline: User Registration Process
+    When I verify that the email field is enabled
+    And I verify that the password field is enabled
+    And I verify that the confirmation password field is enabled
+    And I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    Then the user should be able to register successfully
+
+    Examples:
+      | email               | password            |
+      | krishna@gmail.com   | ValidPassword123    |
+
+  @accessibility-test
+  Scenario Outline: User Registration Process
+    Given the user navigates to the registration page using a screen reader
+    Then the screen reader should announce the email field correctly
+    And the screen reader should announce the password field correctly
+    And the screen reader should announce the confirmation password field correctly
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    Then the email field should accept the unique email format
+    And the password field should accept the valid password
+
+    Examples:
+      | email               | password            |
+      | krishna@gmail.com   | ValidPassword123    |
+
+  @validate_email_password_fields
+  Scenario Outline: User Registration Process
+    Given the registration page loads successfully on mobile
+    Then the email field is visible and accessible on mobile
+    And the password field is visible and accessible on mobile
+    And the confirmation password field is visible and accessible on mobile
+    When I enter a unique email address "<email>"
+    And I enter a valid password "<password>"
+    Then the email field accepts the unique email format
+    And the password field accepts the valid password
+
+    Examples:
+      | email                | password            |
+      | <email>             | <password>         |
+      | krishna@gmail.com    | ValidPassword123    |
+
+  @successful_registration
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I enter "<password>"
+    And I confirm the password "<confirmation>"
+    And I click the "Register" button
+    Then the email field should be cleared
+    And the password field should be cleared
+
+    Examples:
+      | email               | password            | confirmation        |
+      | krishna@gmail.com   | ValidPassword123    | ValidPassword123     |
+
+  @feature_user_registration
+  @validate_labels_and_registration
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    Then the email field has a visible label
+    And the password field has a visible label
+    And the confirmation password field has a visible label
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    Then the email field accepts the unique email format
+    And the password field accepts the valid password
+
+    Examples:
+      | email                | password           |
+      | krishna@gmail.com    | ValidPassword123   |
+
+  @successful-registration
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I enter "<password>"
+    And I confirm the password "<confirmation>"
+    And I click the "Register" button
+    Then a success message should be displayed indicating the account has been created
+    And the user is redirected to the login page
+
+    Examples:
+      | email               | password               | confirmation           |
+      | krishna@gmail.com   | ValidPassword123!      | ValidPassword123!      |
+
+  @invalid_email
+  Scenario Outline: User Registration with Invalid Email
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I enter "<password>"
+    And I confirm the password as "<confirmation>"
+    And the user clicks the Register button
+    Then the email and password fields should retain their values after the error message is displayed
+
+    Examples:
+      | email     | password           | confirmation       |
+      | abc@      | ValidPassword123   | ValidPassword123    |
+
+  @valid-registration
+  Scenario Outline: User Registration Process
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation>" in the confirmation field
+    And I click the "Register" button
+    Then a loading indicator should be displayed while the registration request is processed
+
+    Examples:
+      | email                | password              | confirmation         |
+      | krishna@gmail.com    | ValidPassword123!     | ValidPassword123!     |
+
+  @verify-loading-indicator
+  Scenario Outline: Verify Loading Indicator Disappears
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation>" in the confirmation field
+    And I click the "Register" button
+    Then the loading indicator should disappear after the registration is complete
+
+    Examples:
+      | email                | password              | confirmation         |
+      | krishna@gmail.com    | ValidPassword123!     | ValidPassword123!     |
+
+  @valid-registration
+  Scenario Outline: User Registration Process
+    Given the user opens the registration page on a touch device
+    When the user taps on the email field to focus
+    And the user enters "<email>"
+    And the user taps on the password field to focus
+    And the user enters "<password>"
+    And the user taps on the confirmation password field to focus
+    Then the registration page should load successfully on touch devices
+
+    Examples:
+      | email                | password             |
+      | krishna@gmail.com    | ValidPassword123     |
+
+  @registration-error
+  Scenario Outline: User Registration Process with Existing Email
+    Given the user is on the Registration Page
+    When the user enters "<email>" in the email field
+    And the user enters "<password>" in the password field
+    And the user confirms the password "<confirmation>"
+    And the user clicks the "Register" button
+    Then the system should display an error message indicating the email is already in use
+    And the email field should be highlighted to indicate the error
+
+    Examples:
+      | email                | password            | confirmation        |
+      | krishna@gmail.com    | ValidPassword123    | ValidPassword123     |
+
+  @invalid-password-length
+  Scenario Outline: User Registration Process with Exceeding Password Length
+    Given the user is on the Registration Page
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation>" in the confirmation field
+    And I click the "Register" button
+    Then an error message should be displayed indicating the password exceeds the maximum length
+    And the password field should be highlighted to indicate the error
+
+    Examples:
+      | email                | password                   | confirmation               |
+      | krishna@gmail.com    | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+
+  @feature_user_registration
+  @required-fields-validation
+  Scenario Outline: User Registration Process
+    When the user verifies that the email field has a required field indicator
+    And the user verifies that the password field has a required field indicator
+    And the user verifies that the confirmation password field has a required field indicator
+    And the user clicks the "Register" button without filling in the fields
+    Then the system displays error messages for empty fields
+    And the required field indicators remain visible until the fields are filled
+
+    Examples:
+      | <email_field_required> | <password_field_required> | <confirmation_password_field_required> |
+      | Yes                    | Yes                       | Yes                                      |
+
+  @empty_fields_error
+  Scenario Outline: User Registration Process with Empty Fields
+    When the user leaves the email field empty
+    And the user leaves the password field empty
+    And the user leaves the confirmation password field empty
+    And the user clicks the "Register" button
+    Then the system should display error messages for all empty fields
+    And the email and password fields should be highlighted to indicate the errors
+
+    Examples:
+      | email | password | confirmation_password |
+      |       |          |                       |
+
+  Scenario Outline: Validate that the registration page shows an error message for a short password
+    When I enter a unique email address "<email>" in the email field
+    And I enter a password "<password>" in the password field
+    And I confirm the password "<confirmation>" in the confirmation field
+    And I click the "Register" button
+    Then I should see an error message indicating the password is too short
+    And the password field should be highlighted to indicate the error
+
+    Examples:
+      | email              | password | confirmation |
+      | krishna@gmail.com  | short    | short        |
+
+  @feature_user_registration
+  @tooltip-validation
+  Scenario Outline: User Registration Process Tooltip Validation
+    When the user hovers over the email field
+    Then the tooltip for the email field should provide information about valid email format
+    When the user hovers over the password field
+    Then the tooltip for the password field should provide information about password requirements
+    When the user hovers over the confirmation password field
+    Then the tooltip for the confirmation password field should provide information about matching passwords
+    When the user clicks the "Register" button without filling in the fields
+    Then the system should display error messages for empty fields
+    And the tooltips should disappear after the user interacts with the fields
+
+    Examples:
+      | <email> | <password> | <confirmation_password> |
+      |         |            |                        |
+
+  @invalid-email-format
+  Scenario Outline: User Registration Process with Invalid Email Format
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I enter "<password>"
+    And I enter "<confirmation>"
+    And the user clicks the Register button
+    Then an error message should be displayed indicating the email format is invalid
+    And the email field should be highlighted to indicate the error
+
+    Examples:
+      | email     | password              | confirmation          |
+      | abc@      | ValidPassword123!     | ValidPassword123!     |
+
+  @password_max_length_error
+  Scenario Outline: User Registration Process with Exceeding Password Length
+    Given the user is on the Registration Page
+    When the user enters "<email>" in the email field
+    And the user enters a password that exceeds the maximum length in the password field
+    And the user confirms the password in the confirmation field
+    And the user clicks the "Register" button
+    Then the system should display an error message indicating the password is too long
+    And the password field should be highlighted to indicate the error
+
+    Examples:
+      | email              |
+      | krishna@gmail.com  |
+
+  @invalid-password
+  Scenario Outline: Validate Password with Invalid Characters
+    Given the user is on the Registration Page
+    When the user enters "<email>" in the email field
+    And the user enters "<password>" in the password field
+    And the user confirms the password with "<confirmation>"
+    And the user clicks the Register button
+    Then the user should see an error message indicating the password contains invalid characters
+
+    Examples:
+      | email                | password       | confirmation     |
+      | krishna@gmail.com    | !@#$%^&*      | !@#$%^&*         |
+
+  @empty-email-error
+  Scenario Outline: User Registration Process with Empty Email Field
+    Given the user is on the Registration Page
+    When the user leaves the email field empty
+    And the user enters "<password>" in the password field
+    And the user confirms the password with "<confirmation>"
+    And the user clicks the "Register" button
+    Then the user should see an error message indicating the email field is required
+    And the email field should be highlighted to indicate the error
+
+    Examples:
+      | password            | confirmation        |
+      | ValidPassword123    | ValidPassword123     |
+
+  @password_mismatch
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    When the user enters a unique email address "<email>"
+    And the user enters a valid password "<password>"
+    And the user enters a different password "<confirmation_password>"
+    And the user clicks the Register button
+    Then the system displays an error message for the password mismatch
+
+    Examples:
+      | email              | password           | confirmation_password   |
+      | krishna@gmail.com  | ValidPassword123   | DifferentPassword456     |
+
+  @empty_password
+  Scenario Outline: User Registration with Empty Password
+    Given the user enters "<email>" in the email field
+    And the user leaves the password field empty
+    And the user leaves the confirmation password field empty
+    When the user clicks the "Register" button
+    Then the user should see an error message indicating the password field is required
+    And the password field should be highlighted to indicate the error
+
+    Examples:
+      | email              |
+      | krishna@gmail.com  |
+
+  @empty_confirmation_password
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    When the user enters "<email>" in the email field
+    And the user enters "<password>" in the password field
+    And the user leaves the confirmation password field empty
+    And the user clicks the "Register" button
+    Then an error message should be displayed indicating the confirmation password field is required
+
+    Examples:
+      | email                | password            |
+      | krishna@gmail.com    | ValidPassword123    |
+
+  @invalid-email-domain
+  Scenario Outline: User Registration with Invalid Email Domain
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I enter "<password>"
+    And I enter "<confirmation>"
+    And the user clicks the "Register" button
+    Then an error message should be displayed indicating the email domain is invalid
+    And the email field should be highlighted to indicate the error
+
+    Examples:
+      | email        | password             | confirmation          |
+      | abc@        | ValidPassword123!    | ValidPassword123!     |
+
+  @invalid-email-format
+  Scenario Outline: User Registration Process with Invalid Email Format
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I enter "<password>"
+    And I confirm the password "<confirmation>"
+    And I click the "Register" button
+    Then an error message is displayed indicating the email format is invalid
+    And the email field is highlighted
+
+    Examples:
+      | email            | password              | confirmation         |
+      | abc@@example.com | ValidPassword123!     | ValidPassword123!     |
+
+  @invalid-email-registration
+  Scenario Outline: User Registration Process with Invalid Email Characters
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation>" in the confirmation field
+    And I click the Register button
+    Then the system should display an error message indicating the email format is invalid
+    And the email field should be highlighted to indicate the error
+
+    Examples:
+      | email  | password             | confirmation        |
+      | abc@!  | ValidPassword123     | ValidPassword123     |
+
+  @invalid-email-format
+  Scenario Outline: User Registration with Invalid Email Format
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I enter "<password>"
+    And I confirm the password "<confirmation>"
+    And I click the "Register" button
+    Then an error message should be displayed indicating the email format is invalid
+    And the email field should be highlighted to indicate the error
+
+    Examples:
+      | email        | password              | confirmation         |
+      | abc@        | ValidPassword123!     | ValidPassword123!     |
+
+  @invalid-password
+  Scenario Outline: User Registration with Password Lacking Lowercase Letters
+    Given the user is on the Registration Page
+    When I enter a unique email address "<email>"
+    And I enter a password without lowercase letters "<password>"
+    And I confirm the password in the confirmation field "<confirmation>"
+    And the user clicks the "Register" button
+    Then the system displays an error message indicating the password must contain lowercase letters
+
+    Examples:
+      | email               | password      | confirmation   |
+      | krishna@gmail.com   | PASSWORD123   | PASSWORD123     |
+
+  @registration-failure
+  Scenario Outline: User Registration Process
+    Given the user is on the Registration Page
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation>" in the confirmation field
+    And the user clicks the Register button
+    Then the user should see an error message indicating the email is already in use
+
+    Examples:
+      | email               | password             | confirmation        |
+      | krishna@gmail.com   | ValidPassword123!    | ValidPassword123!    |
+
+  @invalid-email
+  Scenario Outline: User Registration Process with Invalid Email Format
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I enter "<password>"
+    And I confirm "<confirmation>"
+    And the user clicks the "Register" button
+    Then the user should see an error message indicating the email format is invalid
+    And the email field should be highlighted to indicate the error
+
+    Examples:
+      | email    | password             | confirmation         |
+      | abc@     | ValidPassword123!    | ValidPassword123!    |
+
+  @invalid-password
+  Scenario Outline: User Registration with Password Without Numbers
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation>" in the confirmation field
+    And I click the "Register" button
+    Then an error message should be displayed indicating the password must contain numbers
+    And the password field should be highlighted to indicate the error
+
+    Examples:
+      | email               | password                    | confirmation               |
+      | krishna@gmail.com   | passwordwithoutnumbers      | passwordwithoutnumbers      |
+
+  @error_password_without_uppercase
+  Scenario Outline: User Registration Process with Password Without Uppercase Letters
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I enter "<password>"
+    And I confirm the password as "<confirmation>"
+    And the user clicks the Register button
+    Then the system should display an error message indicating the password must contain uppercase letters
+    And the password field should be highlighted to indicate the error
+
+    Examples:
+      | email                      | password       | confirmation   |
+      | uniqueuser@example.com     | password123    | password123     |
+
+  @empty-email
+  Scenario Outline: User Registration Fails When Email Is Empty
+    When the user leaves the email field empty
+    And I enter "<password>" in the password field
+    And I confirm "<confirmation>" in the confirmation field
+    And the user clicks the Register button
+    Then the system should display an error message indicating the email field is required
+    And the email field should be highlighted to indicate the error
+
+    Examples:
+      | password            | confirmation        |
+      | ValidPassword123    | ValidPassword123     |
+
+  @password_mismatch
+  Scenario Outline: User Registration Process with Password Mismatch
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I enter "<password>"
+    And I enter "<confirmation_password>"
+    And I click the "Register" button
+    Then an error message should be displayed indicating the passwords do not match
+    And the confirmation password field should be highlighted
+
+    Examples:
+      | email               | password              | confirmation_password  |
+      | krishna@gmail.com   | ValidPassword123      | DifferentPassword456    |
+
+  @empty-password
+  Scenario Outline: User Registration Fails When Password Is Empty
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I leave the password field empty
+    And I leave the confirmation password field empty
+    And I click the "Register" button
+    Then the system displays an error message indicating the password field is required
+    And the password field is highlighted to indicate the error
+
+    Examples:
+      | email               |
+      | krishna@gmail.com   |
+
+  @invalid-password
+  Scenario Outline: Validate Password Without Special Characters
+    Given the user is on the Registration Page
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation>" in the confirmation field
+    And I click the "Register" button
+    Then the system should display an error message for the missing special characters
+    And the password field should be highlighted to indicate the error
+
+    Examples:
+      | email               | password      | confirmation   |
+      | krishna@gmail.com   | password123   | password123     |
+
+  @invalid-password
+  Scenario Outline: User Registration Fails with Short Password
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I enter "<password>"
+    And I enter "<confirmation>"
+    And I click the Register button
+    Then an error message should be displayed indicating the password is too short
+
+    Examples:
+      | email             | password | confirmation |
+      | krishna@gmail.com | short    | short        |
+
+@empty_confirmation_password
+Scenario Outline: User Registration Process with Empty Confirmation Password
+  Given the user is on the Registration Page
+  When I enter "<email>" in the email field
+  And I enter "<password>" in the password field
+  And I leave the confirmation password field empty
+  And I click the "Register" button
+  Then the system should display an error message indicating the confirmation password field is required
+  And the confirmation password field should be highlighted to indicate the error
+
+  Examples:
+    | email               | password            |
+    | krishna@gmail.com   | ValidPassword123    |
+
+  @password_too_long
+  Scenario Outline: Validate registration fails with long password
+    Given the user is on the Registration Page
+    When I enter "<email>"
+    And I enter "<password>"
+    And I confirm the password "<confirmation>"
+    And I click the "Register" button
+    Then an error message should be displayed indicating the password is too long
+
+    Examples:
+      | email                | password                                       | confirmation                                   |
+      | krishna@gmail.com    | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |
+
+  @invalid-email-registration
+  Scenario Outline: Validate Registration Fails with Invalid Email Format
+    When I enter "<email>"
+    And I enter "<password>"
+    And I confirm the password "<confirmation>"
+    And I click the "Register" button
+    Then the system displays an error message for the invalid email format
+    And the email field is highlighted to indicate the error
+
+    Examples:
+      | email     | password            | confirmation         |
+      | abc@      | ValidPassword123    | ValidPassword123     |
+
+  @invalid-email
+  Scenario Outline: Validate Registration Fails with Invalid Email
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation>" in the confirmation field
+    And I click the "Register" button
+    Then an error message should be displayed indicating the email format is invalid
+    And the email field should be highlighted to indicate the error
+
+    Examples:
+      | email   | password              | confirmation         |
+      | abc@    | ValidPassword123!     | ValidPassword123!     |
+
+  @invalid-password
+  Scenario Outline: Validate Registration Fails with Invalid Password
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation>" in the confirmation field
+    And I click the "Register" button
+    Then an error message should be displayed indicating the password contains invalid characters
+    And the password field should be highlighted to indicate the error
+
+    Examples:
+      | email                | password      | confirmation   |
+      | krishna@gmail.com    | !@#$%^&*      | !@#$%^&*       |
+
+  @invalid-email-registration
+  Scenario Outline: User Registration Fails with Email Without Domain
+    Given the user is on the Registration Page
+    When the user enters "<email>" in the email field
+    And the user enters "<password>" in the password field
+    And the user confirms the password "<confirmation>" in the confirmation field
+    And the user clicks the "Register" button
+    Then the user should see an error message indicating the email format is invalid
+    And the email field should be highlighted to indicate the error
+
+    Examples:
+      | email  | password              | confirmation         |
+      | abc@   | ValidPassword123!     | ValidPassword123!     |
+
+  @invalid-email-format
+  Scenario Outline: User Registration Fails with Invalid Email Format
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation>" in the confirmation field
+    And I click the "Register" button
+    Then the system should display an error message indicating the email format is invalid
+    And the email field should be highlighted to indicate the error
+
+    Examples:
+      | email           | password               | confirmation          |
+      | abc@@gmail.com  | ValidPassword123!      | ValidPassword123!      |
+
+  @invalid-password
+  Scenario Outline: User Registration Process with Password Missing Uppercase
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation>" in the confirmation field
+    And the user clicks the "Register" button
+    Then an error message should be displayed indicating the password must contain uppercase letters
+    And the password field should be highlighted to indicate the error
+
+    Examples:
+      | email                      | password      | confirmation  |
+      | uniqueuser@gmail.com      | password123   | password123    |
+
+  @invalid-email
+  Scenario Outline: User Registration Fails with Invalid Email Format
+    When I enter "<email>" in the email field
+    And I enter "<password>" in the password field
+    And I enter "<confirmation>" in the confirmation field
+    And I click the "Register" button
+    Then an error message should be displayed indicating the email format is invalid
+    And the email field should be highlighted to indicate the error
+
+    Examples:
+      | email   | password             | confirmation        |
+      | abc@!   | ValidPassword123     | ValidPassword123     |
+
+  @invalid-email-format
+  Scenario Outline: User Registration Process with Invalid Email Format
+    When I enter "<email>"
+    And I enter "<password>"
+    And I confirm the password as "<confirmation>"
+    And the user clicks the "Register" button
+    Then the system displays an error message indicating the email format is invalid
+    And the email field is highlighted to indicate the error
+
+    Examples:
+      | email        | password              | confirmation          |
+      | abc@         | ValidPassword123!     | ValidPassword123!     |
