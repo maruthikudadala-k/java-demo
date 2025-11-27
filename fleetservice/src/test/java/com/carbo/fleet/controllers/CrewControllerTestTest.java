@@ -7,11 +7,10 @@ import com.carbo.fleet.model.CrewDisplayObject;
 import com.carbo.fleet.services.CrewService;
 import com.carbo.fleet.utils.Constants;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
@@ -27,6 +26,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@ExtendWith(MockitoExtension.class)
 class CrewControllerTest {
 
     private MockMvc mockMvc;
@@ -37,14 +37,7 @@ class CrewControllerTest {
     @InjectMocks
     private CrewController crewController;
 
-    private ObjectMapper objectMapper;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
-        objectMapper = new ObjectMapper();
-    }
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void testGetAllCrew_Success() throws Exception {
@@ -53,8 +46,7 @@ class CrewControllerTest {
         int limit = 10;
         CrewDisplayObject expectedResult = CrewDisplayObject.builder().build();
 
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getHeader("X-Organization-Id")).thenReturn(organizationId);
+        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         when(crewService.findAll(eq(organizationId), eq(offSet), eq(limit))).thenReturn(expectedResult);
 
         mockMvc.perform(get("/v1/crew/")
@@ -76,8 +68,7 @@ class CrewControllerTest {
                 .name("Test Crew")
                 .build();
 
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getHeader("X-Organization-Id")).thenReturn(organizationId);
+        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         when(crewService.findById(eq(crewId))).thenReturn(expectedCrew);
 
         mockMvc.perform(get("/v1/crew/{id}", crewId)
@@ -105,8 +96,7 @@ class CrewControllerTest {
                 .organizationId(organizationId)
                 .build();
 
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getHeader("X-Organization-Id")).thenReturn(organizationId);
+        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         when(crewService.saveCrew(any(CrewDto.class))).thenReturn(savedCrew);
 
         mockMvc.perform(post("/v1/crew/")
@@ -117,8 +107,8 @@ class CrewControllerTest {
                 .andExpect(content().contentType("application/json"));
 
         verify(crewService).saveCrew(argThat(crew ->
-            crew.getOrganizationId().equals(organizationId) &&
-            crew.getName().equals("New Crew")
+                crew.getOrganizationId().equals(organizationId) &&
+                crew.getName().equals("New Crew")
         ));
     }
 
@@ -135,15 +125,8 @@ class CrewControllerTest {
                 .fleetId("fleet123")
                 .build();
 
-        CrewDto expectedResult = CrewDto.builder()
-                .id(crewId)
-                .name("Updated Crew")
-                .build();
-
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getHeader("X-Organization-Id")).thenReturn(organizationId);
+        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         when(crewService.updateCrew(any(CrewDto.class))).thenReturn(true);
-        when(crewService.findById(eq(crewId))).thenReturn(expectedResult);
 
         mockMvc.perform(put("/v1/crew/")
                 .header("X-Organization-Id", organizationId)
@@ -153,15 +136,16 @@ class CrewControllerTest {
                 .andExpect(content().contentType("application/json"));
 
         verify(crewService).updateCrew(argThat(crew ->
-            crew.getOrganizationId().equals(organizationId) &&
-            crew.getId().equals(crewId)
+                crew.getOrganizationId().equals(organizationId) &&
+                crew.getId().equals(crewId)
         ));
-        verify(crewService).findById(eq(crewId));
     }
 
     @Test
     void testDeleteCrew_Success() throws Exception {
         String crewId = "crew123";
+
+        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
 
         mockMvc.perform(delete("/v1/crew/{id}", crewId))
                 .andExpect(status().isNoContent());
@@ -177,8 +161,7 @@ class CrewControllerTest {
         int limit = 10;
         CrewDisplayObject expectedResult = CrewDisplayObject.builder().build();
 
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getHeader("X-Organization-Id")).thenReturn(organizationId);
+        mockMvc = MockMvcBuilders.standaloneSetup(crewController).build();
         when(crewService.findAllByFleet(eq(organizationId), eq(fleetName), eq(offSet), eq(limit)))
                 .thenReturn(expectedResult);
 

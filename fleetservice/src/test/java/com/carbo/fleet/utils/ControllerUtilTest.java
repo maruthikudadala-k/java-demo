@@ -5,8 +5,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoExtension;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.mock.web.MockHttpServletRequest;
 
 import javax.servlet.http.HttpServletRequest;
 import java.security.Principal;
@@ -20,22 +22,21 @@ import static org.mockito.Mockito.when;
 public class ControllerUtilTest {
 
     @Mock
-    private HttpServletRequest request;
-
-    @Mock
-    private OAuth2Authentication oAuth2Authentication;
+    private OAuth2Authentication oauth2Authentication;
 
     @Mock
     private Principal principal;
 
+    @InjectMocks
+    private MockHttpServletRequest request;
+
     @Test
-    public void shouldReturnOrganizationIdWhenRequestIsProvided() {
+    public void shouldReturnOrganizationIdWhenRequestIsValid() {
         Map<String, Object> details = new HashMap<>();
         details.put("organizationId", "org123");
-        when(request.getUserPrincipal()).thenReturn(principal);
-        when(principal instanceof OAuth2Authentication).thenReturn(true);
-        when(oAuth2Authentication.getUserAuthentication()).thenReturn(oAuth2Authentication);
-        when(oAuth2Authentication.getDetails()).thenReturn(details);
+        when(principal.getUserAuthentication()).thenReturn(oauth2Authentication);
+        when(oauth2Authentication.getDetails()).thenReturn(details);
+        request.setUserPrincipal(principal);
 
         String organizationId = ControllerUtil.getOrganizationId(request);
 
@@ -43,13 +44,12 @@ public class ControllerUtilTest {
     }
 
     @Test
-    public void shouldReturnOrganizationTypeWhenRequestIsProvided() {
+    public void shouldReturnOrganizationTypeWhenRequestIsValid() {
         Map<String, Object> details = new HashMap<>();
         details.put("organizationType", "typeA");
-        when(request.getUserPrincipal()).thenReturn(principal);
-        when(principal instanceof OAuth2Authentication).thenReturn(true);
-        when(oAuth2Authentication.getUserAuthentication()).thenReturn(oAuth2Authentication);
-        when(oAuth2Authentication.getDetails()).thenReturn(details);
+        when(principal.getUserAuthentication()).thenReturn(oauth2Authentication);
+        when(oauth2Authentication.getDetails()).thenReturn(details);
+        request.setUserPrincipal(principal);
 
         String organizationType = ControllerUtil.getOrganizationType(request);
 
@@ -57,16 +57,15 @@ public class ControllerUtilTest {
     }
 
     @Test
-    public void shouldReturnUserNameWhenRequestIsProvided() {
+    public void shouldReturnUserNameWhenRequestIsValid() {
         Map<String, Object> details = new HashMap<>();
-        details.put("userName", "john.doe");
-        when(request.getUserPrincipal()).thenReturn(principal);
-        when(principal instanceof OAuth2Authentication).thenReturn(true);
-        when(oAuth2Authentication.getUserAuthentication()).thenReturn(oAuth2Authentication);
-        when(oAuth2Authentication.getDetails()).thenReturn(details);
+        details.put("userName", "user1");
+        when(principal.getUserAuthentication()).thenReturn(oauth2Authentication);
+        when(oauth2Authentication.getDetails()).thenReturn(details);
+        request.setUserPrincipal(principal);
 
         String userName = ControllerUtil.getUserName(request);
 
-        assertEquals("john.doe", userName);
+        assertEquals("user1", userName);
     }
 }
