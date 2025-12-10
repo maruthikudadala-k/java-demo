@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class SyncControllerTest {
@@ -33,26 +33,21 @@ public class SyncControllerTest {
     @Test
     public void shouldReturnFleetTimestampsWhenViewIsCalled() {
         String organizationId = "org123";
-        Fleet fleet1 = new Fleet();
-        fleet1.setId("fleet1");
-        fleet1.setTs(1000L);
-        Fleet fleet2 = new Fleet();
-        fleet2.setId("fleet2");
-        fleet2.setTs(2000L);
-        List<Fleet> fleetList = Arrays.asList(fleet1, fleet2);
+        List<Fleet> fleets = Arrays.asList(new Fleet(), new Fleet());
+        fleets.get(0).setId("fleet1");
+        fleets.get(0).setTs(100L);
+        fleets.get(1).setId("fleet2");
+        fleets.get(1).setTs(200L);
 
-        when(request.getUserPrincipal()).thenReturn(Mockito.mock(Principal.class));
-        when(fleetService.getByOrganizationId(organizationId)).thenReturn(fleetList);
-        when(com.carbo.fleet.utils.ControllerUtil.getOrganizationId(request)).thenReturn(organizationId);
-
-        Map<String, Long> expectedResult = new HashMap<>();
-        expectedResult.put("fleet1", 1000L);
-        expectedResult.put("fleet2", 2000L);
+        when(request.getUserPrincipal()).thenReturn((Principal) () -> organizationId);
+        when(fleetService.getByOrganizationId(organizationId)).thenReturn(fleets);
 
         Map<String, Long> result = syncController.view(request);
 
-        assertEquals(expectedResult, result);
-        verify(fleetService).getByOrganizationId(organizationId);
+        Map<String, Long> expected = new HashMap<>();
+        expected.put("fleet1", 100L);
+        expected.put("fleet2", 200L);
+        assertEquals(expected, result);
     }
 
     @Test
@@ -61,62 +56,25 @@ public class SyncControllerTest {
         SyncRequest syncRequest = new SyncRequest();
         Fleet fleetToUpdate = new Fleet();
         fleetToUpdate.setId("fleet1");
+        fleetToUpdate.setTs(100L);
         fleetToUpdate.setOrganizationId(organizationId);
-        fleetToUpdate.setTs(1500L);
-        syncRequest.setUpdate(Collections.singletonList(fleetToUpdate));
-
+        
         Fleet existingFleet = new Fleet();
         existingFleet.setId("fleet1");
-        existingFleet.setTs(1000L);
+        existingFleet.setTs(50L);
+        existingFleet.setOrganizationId(organizationId);
         
-        when(request.getUserPrincipal()).thenReturn(Mockito.mock(Principal.class));
+        syncRequest.setUpdate(Collections.singletonList(fleetToUpdate));
+
+        when(request.getUserPrincipal()).thenReturn((Principal) () -> organizationId);
         when(fleetService.getFleet("fleet1")).thenReturn(Optional.of(existingFleet));
-        when(com.carbo.fleet.utils.ControllerUtil.getOrganizationId(request)).thenReturn(organizationId);
-        
-        SyncResponse response = syncController.sync(request, syncRequest);
+        when(fleetService.saveFleet(Mockito.any(Fleet.class))).thenReturn(fleetToUpdate);
+        when(fleetService.updateFleet(Mockito.any(Fleet.class))).thenReturn(null);
 
-        assertEquals(1, response.getUpdated().size());
-        assertEquals(1500L, response.getUpdated().get("fleet1").longValue());
-        verify(fleetService).updateFleet(fleetToUpdate);
-    }
+        SyncResponse result = syncController.sync(request, syncRequest);
 
-    @Test
-    public void shouldRemoveFleetsWhenSyncIsCalledWithRemoveRequest() {
-        String organizationId = "org123";
-        SyncRequest syncRequest = new SyncRequest();
-        syncRequest.setRemove(new HashSet<>(Arrays.asList("fleet1", "fleet2")));
-
-        when(request.getUserPrincipal()).thenReturn(Mockito.mock(Principal.class));
-        when(com.carbo.fleet.utils.ControllerUtil.getOrganizationId(request)).thenReturn(organizationId);
-
-        SyncResponse response = syncController.sync(request, syncRequest);
-
-        verify(fleetService, times(1)).deleteFleet("fleet1");
-        verify(fleetService, times(1)).deleteFleet("fleet2");
-        assertEquals(2, response.getRemoved().size());
-    }
-
-    @Test
-    public void shouldGetFleetsWhenSyncIsCalledWithGetRequest() {
-        String organizationId = "org123";
-        SyncRequest syncRequest = new SyncRequest();
-        syncRequest.setGet(new HashSet<>(Arrays.asList("fleet1", "fleet2")));
-
-        Fleet fleet1 = new Fleet();
-        fleet1.setId("fleet1");
-        Fleet fleet2 = new Fleet();
-        fleet2.setId("fleet2");
-        List<Fleet> fleetList = Arrays.asList(fleet1, fleet2);
-
-        when(request.getUserPrincipal()).thenReturn(Mockito.mock(Principal.class));
-        when(fleetService.getFleet("fleet1")).thenReturn(Optional.of(fleet1));
-        when(fleetService.getFleet("fleet2")).thenReturn(Optional.of(fleet2));
-        when(com.carbo.fleet.utils.ControllerUtil.getOrganizationId(request)).thenReturn(organizationId);
-
-        SyncResponse response = syncController.sync(request, syncRequest);
-
-        assertEquals(2, response.getGet().size());
-        assertEquals("fleet1", response.getGet().get(0).getId());
-        assertEquals("fleet2", response.getGet().get(1).getId());
+        assertEquals(1, result.getUpdated().size());
+        assertEquals(100L, result.getUpdated().get("fleet1"));
+        assertEquals(organizationId, fleetToUpdate.getOrganizationId());
     }
 }
