@@ -15,12 +15,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 
-import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,10 +33,10 @@ public class CrewControllerTest {
     @Test
     public void shouldReturnAllCrewWhenGetAllCrewIsCalled() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String organizationId = "testOrgId";
+        String organizationId = "org123";
         request.setUserPrincipal(() -> organizationId);
-        CrewDisplayObject crewDisplayObject = new CrewDisplayObject();
         
+        CrewDisplayObject crewDisplayObject = new CrewDisplayObject();
         when(crewService.findAll(organizationId, 0, 10)).thenReturn(crewDisplayObject);
 
         CrewDisplayObject result = crewController.getAllCrew(request, 0, 10);
@@ -50,57 +48,58 @@ public class CrewControllerTest {
     @Test
     public void shouldReturnCrewWhenGetCrewIsCalled() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String crewId = "testCrewId";
+        String crewId = "crew123";
         CrewDto crewDto = new CrewDto();
-        
         when(crewService.findById(crewId)).thenReturn(crewDto);
 
         CrewDto result = crewController.getCrew(request, crewId);
 
-        assertNotNull(result);
+        assertEquals(crewDto, result);
         verify(crewService).findById(crewId);
     }
 
     @Test
     public void shouldCreateCrewWhenCreateCrewIsCalled() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String organizationId = "testOrgId";
+        String organizationId = "org123";
         request.setUserPrincipal(() -> organizationId);
+        
         CrewDto crewDto = new CrewDto();
-        crewDto.setId("testId");
+        crewDto.setId("crew123");
         crewDto.setName("Test Crew");
-        crewDto.setJobPattern("Job Pattern");
+        crewDto.setJobPattern("Pattern");
         crewDto.setShiftStart("08:00");
         crewDto.setStartDate("01/01/2023");
-        crewDto.setFleetId("testFleetId");
-
+        crewDto.setFleetId("fleet123");
+        
         Crew crewNew = new Crew();
-
         when(crewService.saveCrew(crewDto)).thenReturn(crewNew);
-
+        
         ResponseEntity<Object> response = crewController.createCrew(request, crewDto);
-
+        
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(crewNew, response.getBody());
         verify(crewService).saveCrew(crewDto);
     }
 
     @Test
     public void shouldReturnConflictWhenCrewAlreadyExists() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String organizationId = "testOrgId";
+        String organizationId = "org123";
         request.setUserPrincipal(() -> organizationId);
+        
         CrewDto crewDto = new CrewDto();
-        crewDto.setId("testId");
+        crewDto.setId("crew123");
         crewDto.setName("Test Crew");
-        crewDto.setJobPattern("Job Pattern");
+        crewDto.setJobPattern("Pattern");
         crewDto.setShiftStart("08:00");
         crewDto.setStartDate("01/01/2023");
-        crewDto.setFleetId("testFleetId");
-
+        crewDto.setFleetId("fleet123");
+        
         when(crewService.saveCrew(crewDto)).thenReturn(null);
-
+        
         ResponseEntity<Object> response = crewController.createCrew(request, crewDto);
-
+        
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
         Map<String, String> error = (Map<String, String>) response.getBody();
         assertEquals(Constants.CREW_ALREADY_EXISTS, error.get("errorMessage"));
@@ -110,43 +109,42 @@ public class CrewControllerTest {
     @Test
     public void shouldUpdateCrewWhenUpdatePersonnelIsCalled() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String organizationId = "testOrgId";
+        String organizationId = "org123";
         request.setUserPrincipal(() -> organizationId);
+        
         CrewDto crewDto = new CrewDto();
-        crewDto.setId("testId");
-        crewDto.setName("Updated Crew");
-
+        crewDto.setId("crew123");
+        
         when(crewService.updateCrew(crewDto)).thenReturn(true);
         when(crewService.findById(crewDto.getId())).thenReturn(crewDto);
-
+        
         CrewDto result = crewController.updatePersonnel(request, crewDto);
-
-        assertNotNull(result);
+        
+        assertEquals(crewDto, result);
         verify(crewService).updateCrew(crewDto);
         verify(crewService).findById(crewDto.getId());
     }
 
     @Test
     public void shouldDeleteCrewWhenDeleteCrewIsCalled() {
-        String crewId = "testCrewId";
-
+        String crewId = "crew123";
         crewController.deleteCrew(crewId);
-
+        
         verify(crewService).deleteCrew(crewId);
     }
 
     @Test
     public void shouldReturnAllCrewByFleetWhenGetAllCrewByFleetIsCalled() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String organizationId = "testOrgId";
+        String organizationId = "org123";
         request.setUserPrincipal(() -> organizationId);
-        CrewDisplayObject crewDisplayObject = new CrewDisplayObject();
         
-        when(crewService.findAllByFleet(organizationId, "testFleetName", 0, 10)).thenReturn(crewDisplayObject);
-
-        CrewDisplayObject result = crewController.getAllCrewByFleet(request, 0, 10, "testFleetName");
-
+        CrewDisplayObject crewDisplayObject = new CrewDisplayObject();
+        when(crewService.findAllByFleet(organizationId, "FleetName", 0, 10)).thenReturn(crewDisplayObject);
+        
+        CrewDisplayObject result = crewController.getAllCrewByFleet(request, 0, 10, "FleetName");
+        
         assertNotNull(result);
-        verify(crewService).findAllByFleet(organizationId, "testFleetName", 0, 10);
+        verify(crewService).findAllByFleet(organizationId, "FleetName", 0, 10);
     }
 }
