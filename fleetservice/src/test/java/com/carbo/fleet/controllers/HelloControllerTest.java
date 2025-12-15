@@ -2,22 +2,25 @@
 package com.carbo.fleet.controllers;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.junit.jupiter.MockitoSettings;
+import static org.mockito.quality.Strictness.LENIENT;
 
 @ExtendWith(MockitoExtension.class)
-class HelloControllerTest {
+@MockitoSettings(strictness = LENIENT)
+public class HelloControllerTest {
 
-    @InjectMocks
-    private HelloController helloController;
+    private HelloController helloController = new HelloController();
 
     @Test
-    void shouldReturnGreetingsMessageWhenIndexIsCalled() {
-        String result = helloController.index();
-        assertEquals("Greetings from Spring Boot!", result);
+    public void shouldReturnGreetingsWhenIndexIsCalled() {
+        // When
+        String response = helloController.index();
+
+        // Then
+        assertEquals("Greetings from Spring Boot!", response);
     }
 }
