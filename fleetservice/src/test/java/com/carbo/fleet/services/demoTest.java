@@ -5,8 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.MockitoExtension;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,145 +20,151 @@ public class BookServiceTest {
     @InjectMocks
     private BookService bookService;
 
-    @Mock
-    private BookService.Book book;
-
     @Test
     public void shouldAddBookSuccessfully() {
-        when(book.getTitle()).thenReturn("Effective Java");
-        when(book.getAuthor()).thenReturn("Joshua Bloch");
-        when(book.getPrice()).thenReturn(45.0);
+        Book book = new Book("Title", "Author", 10.0);
         
-        Book addedBook = bookService.addBook(book);
+        Book result = bookService.addBook(book);
         
-        assertNotNull(addedBook);
-        assertEquals("Effective Java", addedBook.getTitle());
-        assertEquals("Joshua Bloch", addedBook.getAuthor());
-        assertEquals(45.0, addedBook.getPrice());
+        assertEquals(book, result);
+        assertNotNull(result.getId());
     }
 
     @Test
-    public void shouldReturnBookWhenFoundById() {
-        Book book = new Book("Effective Java", "Joshua Bloch", 45.0);
-        book.setId(1L);
+    public void shouldReturnBookByIdWhenExists() {
+        Book book = new Book("Title", "Author", 10.0);
         bookService.addBook(book);
         
-        Optional<Book> foundBook = bookService.findById(1L);
+        Optional<Book> result = bookService.findById(book.getId());
         
-        assertTrue(foundBook.isPresent());
-        assertEquals("Effective Java", foundBook.get().getTitle());
+        assertTrue(result.isPresent());
+        assertEquals(book, result.get());
     }
 
     @Test
     public void shouldReturnEmptyOptionalWhenBookNotFoundById() {
-        Optional<Book> foundBook = bookService.findById(999L);
+        Optional<Book> result = bookService.findById(1L);
         
-        assertFalse(foundBook.isPresent());
+        assertFalse(result.isPresent());
     }
 
     @Test
     public void shouldReturnBooksByAuthor() {
-        bookService.addBook(new Book("Effective Java", "Joshua Bloch", 45.0));
-        bookService.addBook(new Book("Java Concurrency in Practice", "Brian Goetz", 50.0));
+        Book book1 = new Book("Title1", "Author", 10.0);
+        Book book2 = new Book("Title2", "Author", 15.0);
+        bookService.addBook(book1);
+        bookService.addBook(book2);
         
-        List<Book> books = bookService.findByAuthor("Joshua Bloch");
+        List<Book> result = bookService.findByAuthor("Author");
         
-        assertEquals(1, books.size());
-        assertEquals("Effective Java", books.get(0).getTitle());
+        assertEquals(2, result.size());
+        assertTrue(result.contains(book1));
+        assertTrue(result.contains(book2));
     }
 
     @Test
-    public void shouldReturnEmptyListWhenAuthorNotFound() {
-        List<Book> books = bookService.findByAuthor("Unknown Author");
+    public void shouldReturnEmptyListWhenNoBooksByAuthor() {
+        List<Book> result = bookService.findByAuthor("Unknown");
         
-        assertTrue(books.isEmpty());
+        assertTrue(result.isEmpty());
     }
 
     @Test
-    public void shouldUpdatePriceSuccessfully() {
-        Book book = new Book("Effective Java", "Joshua Bloch", 45.0);
-        book.setId(1L);
+    public void shouldUpdateBookPriceSuccessfully() {
+        Book book = new Book("Title", "Author", 10.0);
         bookService.addBook(book);
         
-        boolean isUpdated = bookService.updatePrice(1L, 50.0);
+        boolean result = bookService.updatePrice(book.getId(), 12.0);
         
-        assertTrue(isUpdated);
-        assertEquals(50.0, book.getPrice());
+        assertTrue(result);
+        assertEquals(12.0, book.getPrice());
     }
 
     @Test
-    public void shouldReturnFalseWhenUpdatingPriceOfNonExistingBook() {
-        boolean isUpdated = bookService.updatePrice(999L, 50.0);
+    public void shouldReturnFalseWhenUpdatingPriceOfNonExistentBook() {
+        boolean result = bookService.updatePrice(1L, 12.0);
         
-        assertFalse(isUpdated);
+        assertFalse(result);
     }
 
     @Test
     public void shouldCalculateTotalValueOfBooks() {
-        bookService.addBook(new Book("Effective Java", "Joshua Bloch", 45.0));
-        bookService.addBook(new Book("Java Concurrency in Practice", "Brian Goetz", 50.0));
+        bookService.addBook(new Book("Title1", "Author1", 10.0));
+        bookService.addBook(new Book("Title2", "Author2", 15.0));
         
         double totalValue = bookService.calculateTotalValue();
         
-        assertEquals(95.0, totalValue);
+        assertEquals(25.0, totalValue);
     }
 
     @Test
-    public void shouldReturnBooksWithinPriceRange() {
-        bookService.addBook(new Book("Book 1", "Author 1", 30.0));
-        bookService.addBook(new Book("Book 2", "Author 2", 50.0));
+    public void shouldReturnBooksByPriceRange() {
+        Book book1 = new Book("Title1", "Author", 10.0);
+        Book book2 = new Book("Title2", "Author", 20.0);
+        bookService.addBook(book1);
+        bookService.addBook(book2);
         
-        List<Book> books = bookService.getBooksByPriceRange(20.0, 40.0);
+        List<Book> result = bookService.getBooksByPriceRange(5.0, 15.0);
         
-        assertEquals(1, books.size());
-        assertEquals("Book 1", books.get(0).getTitle());
+        assertEquals(1, result.size());
+        assertTrue(result.contains(book1));
+    }
+
+    @Test
+    public void shouldReturnEmptyListWhenNoBooksInPriceRange() {
+        List<Book> result = bookService.getBooksByPriceRange(5.0, 15.0);
+        
+        assertTrue(result.isEmpty());
     }
 
     @Test
     public void shouldRemoveBookSuccessfully() {
-        Book book = new Book("Effective Java", "Joshua Bloch", 45.0);
-        book.setId(1L);
+        Book book = new Book("Title", "Author", 10.0);
         bookService.addBook(book);
         
-        boolean isRemoved = bookService.removeBook(1L);
+        boolean result = bookService.removeBook(book.getId());
         
-        assertTrue(isRemoved);
-        assertFalse(bookService.findById(1L).isPresent());
+        assertTrue(result);
+        assertFalse(bookService.findById(book.getId()).isPresent());
     }
 
     @Test
-    public void shouldReturnFalseWhenRemovingNonExistingBook() {
-        boolean isRemoved = bookService.removeBook(999L);
+    public void shouldReturnFalseWhenRemovingNonExistentBook() {
+        boolean result = bookService.removeBook(1L);
         
-        assertFalse(isRemoved);
+        assertFalse(result);
     }
 
     @Test
     public void shouldReturnAllBooks() {
-        bookService.addBook(new Book("Effective Java", "Joshua Bloch", 45.0));
-        bookService.addBook(new Book("Java Concurrency in Practice", "Brian Goetz", 50.0));
+        Book book1 = new Book("Title1", "Author", 10.0);
+        Book book2 = new Book("Title2", "Author", 15.0);
+        bookService.addBook(book1);
+        bookService.addBook(book2);
         
-        List<Book> books = bookService.getAllBooks();
+        List<Book> result = bookService.getAllBooks();
         
-        assertEquals(2, books.size());
+        assertEquals(2, result.size());
+        assertTrue(result.contains(book1));
+        assertTrue(result.contains(book2));
     }
 
     @Test
-    public void shouldReturnTrueWhenCollectionIsEmpty() {
+    public void shouldReturnTrueIfBooksAreEmpty() {
         assertTrue(bookService.isEmpty());
     }
 
     @Test
-    public void shouldReturnFalseWhenCollectionIsNotEmpty() {
-        bookService.addBook(new Book("Effective Java", "Joshua Bloch", 45.0));
+    public void shouldReturnFalseIfBooksAreNotEmpty() {
+        bookService.addBook(new Book("Title", "Author", 10.0));
         
         assertFalse(bookService.isEmpty());
     }
 
     @Test
-    public void shouldReturnCorrectBookCount() {
-        bookService.addBook(new Book("Effective Java", "Joshua Bloch", 45.0));
-        bookService.addBook(new Book("Java Concurrency in Practice", "Brian Goetz", 50.0));
+    public void shouldReturnBookCount() {
+        bookService.addBook(new Book("Title1", "Author", 10.0));
+        bookService.addBook(new Book("Title2", "Author", 15.0));
         
         int count = bookService.getBookCount();
         
