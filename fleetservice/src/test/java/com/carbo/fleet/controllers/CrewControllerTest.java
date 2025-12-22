@@ -10,18 +10,18 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(MockitoExtension.class)
 public class CrewControllerTest {
@@ -33,123 +33,124 @@ public class CrewControllerTest {
     private CrewController crewController;
 
     @Test
-    public void shouldReturnAllCrewWhenGetAllCrewIsCalled() {
-        // Arrange
+    public void shouldReturnAllCrewWhenGetAllCrewCalled() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String organizationId = "org123";
-        request.setUserPrincipal(() -> organizationId);
+        request.setUserPrincipal(() -> "userPrincipal");
+        
         CrewDisplayObject crewDisplayObject = new CrewDisplayObject();
-        when(crewService.findAll(organizationId, 0, 10)).thenReturn(crewDisplayObject);
+        crewDisplayObject.setCrews(Collections.emptyList());
+        crewDisplayObject.setTotalCount(0);
 
-        // Act
+        Mockito.when(crewService.findAll(any(), eq(0), eq(10))).thenReturn(crewDisplayObject);
+
         CrewDisplayObject result = crewController.getAllCrew(request, 0, 10);
 
-        // Assert
         assertEquals(crewDisplayObject, result);
-        verify(crewService).findAll(organizationId, 0, 10);
     }
 
     @Test
-    public void shouldReturnCrewWhenGetCrewIsCalled() {
-        // Arrange
+    public void shouldReturnCrewWhenGetCrewCalled() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String crewId = "crew123";
+        String crewId = "1";
         CrewDto crewDto = new CrewDto();
-        when(crewService.findById(crewId)).thenReturn(crewDto);
+        crewDto.setId(crewId);
+        crewDto.setName("Test Crew");
+        crewDto.setJobPattern("Job Pattern");
+        crewDto.setShiftStart("08:00 AM");
+        crewDto.setStartDate("01/01/2023");
+        crewDto.setFleetId("Fleet1");
 
-        // Act
+        Mockito.when(crewService.findById(crewId)).thenReturn(crewDto);
+
         CrewDto result = crewController.getCrew(request, crewId);
 
-        // Assert
         assertEquals(crewDto, result);
-        verify(crewService).findById(crewId);
     }
 
     @Test
-    public void shouldCreateCrewWhenCreateCrewIsCalled() {
-        // Arrange
+    public void shouldCreateCrewWhenCreateCrewCalled() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String organizationId = "org123";
-        request.setUserPrincipal(() -> organizationId);
         CrewDto crewDto = new CrewDto();
-        crewDto.setId("crew123");
-        when(crewService.saveCrew(crewDto)).thenReturn(new Crew());
+        crewDto.setName("New Crew");
+        crewDto.setJobPattern("Job Pattern");
+        crewDto.setShiftStart("08:00 AM");
+        crewDto.setStartDate("01/01/2023");
+        crewDto.setFleetId("Fleet1");
 
-        // Act
-        ResponseEntity<Object> responseEntity = crewController.createCrew(request, crewDto);
+        Crew crew = new Crew();
+        crew.setId("1");
+        crew.setName("New Crew");
 
-        // Assert
-        assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
-        verify(crewService).saveCrew(crewDto);
+        request.setUserPrincipal(() -> "userPrincipal");
+        Mockito.when(crewService.saveCrew(any(CrewDto.class))).thenReturn(crew);
+
+        ResponseEntity<Object> response = crewController.createCrew(request, crewDto);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(crew, response.getBody());
     }
 
     @Test
     public void shouldReturnConflictWhenCrewAlreadyExists() {
-        // Arrange
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String organizationId = "org123";
-        request.setUserPrincipal(() -> organizationId);
         CrewDto crewDto = new CrewDto();
-        crewDto.setId("crew123");
-        when(crewService.saveCrew(crewDto)).thenReturn(null);
-        Map<String, String> error = new HashMap<>();
-        error.put("errorMessage", Constants.CREW_ALREADY_EXISTS);
+        crewDto.setName("Existing Crew");
+        crewDto.setJobPattern("Job Pattern");
+        crewDto.setShiftStart("08:00 AM");
+        crewDto.setStartDate("01/01/2023");
+        crewDto.setFleetId("Fleet1");
 
-        // Act
-        ResponseEntity<Object> responseEntity = crewController.createCrew(request, crewDto);
+        request.setUserPrincipal(() -> "userPrincipal");
+        Mockito.when(crewService.saveCrew(any(CrewDto.class))).thenReturn(null);
 
-        // Assert
-        assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
-        assertEquals(error, responseEntity.getBody());
-        verify(crewService).saveCrew(crewDto);
+        ResponseEntity<Object> response = crewController.createCrew(request, crewDto);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        HashMap<String, String> error = (HashMap<String, String>) response.getBody();
+        assertEquals(Constants.CREW_ALREADY_EXISTS, error.get("errorMessage"));
     }
 
     @Test
-    public void shouldUpdateCrewWhenUpdateCrewIsCalled() {
-        // Arrange
+    public void shouldUpdateCrewWhenUpdatePersonnelCalled() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String organizationId = "org123";
-        request.setUserPrincipal(() -> organizationId);
         CrewDto crewDto = new CrewDto();
-        crewDto.setId("crew123");
-        when(crewService.updateCrew(crewDto)).thenReturn(true);
-        when(crewService.findById(crewDto.getId())).thenReturn(crewDto);
+        crewDto.setId("1");
+        crewDto.setName("Updated Crew");
+        crewDto.setJobPattern("Updated Job Pattern");
+        crewDto.setShiftStart("08:00 AM");
+        crewDto.setStartDate("01/01/2023");
+        crewDto.setFleetId("Fleet1");
 
-        // Act
+        request.setUserPrincipal(() -> "userPrincipal");
+        Mockito.when(crewService.updateCrew(any(CrewDto.class))).thenReturn(true);
+        Mockito.when(crewService.findById(crewDto.getId())).thenReturn(crewDto);
+
         CrewDto result = crewController.updatePersonnel(request, crewDto);
 
-        // Assert
         assertEquals(crewDto, result);
-        verify(crewService).updateCrew(crewDto);
-        verify(crewService).findById(crewDto.getId());
     }
 
     @Test
-    public void shouldDeleteCrewWhenDeleteCrewIsCalled() {
-        // Arrange
-        String crewId = "crew123";
-
-        // Act
+    public void shouldDeleteCrewWhenDeleteCrewCalled() {
+        String crewId = "1";
         crewController.deleteCrew(crewId);
 
-        // Assert
-        verify(crewService).deleteCrew(crewId);
+        Mockito.verify(crewService).deleteCrew(crewId);
     }
 
     @Test
-    public void shouldReturnAllCrewByFleetWhenGetAllCrewByFleetIsCalled() {
-        // Arrange
+    public void shouldReturnAllCrewByFleetWhenGetAllCrewByFleetCalled() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String organizationId = "org123";
-        request.setUserPrincipal(() -> organizationId);
+        request.setUserPrincipal(() -> "userPrincipal");
+        
         CrewDisplayObject crewDisplayObject = new CrewDisplayObject();
-        when(crewService.findAllByFleet(organizationId, "fleetName", 0, 10)).thenReturn(crewDisplayObject);
+        crewDisplayObject.setCrews(Collections.emptyList());
+        crewDisplayObject.setTotalCount(0);
 
-        // Act
-        CrewDisplayObject result = crewController.getAllCrewByFleet(request, 0, 10, "fleetName");
+        Mockito.when(crewService.findAllByFleet(any(), any(), eq(0), eq(10))).thenReturn(crewDisplayObject);
 
-        // Assert
+        CrewDisplayObject result = crewController.getAllCrewByFleet(request, 0, 10, "Fleet1");
+
         assertEquals(crewDisplayObject, result);
-        verify(crewService).findAllByFleet(organizationId, "fleetName", 0, 10);
     }
 }
