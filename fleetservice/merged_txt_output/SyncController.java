@@ -394,7 +394,7 @@ public class ControllerUtil {
     }
 }
 
-// ===== Current file: src\main\java\com\carbo\fleet\controllers\SyncController.java =====
+// ===== Current file: src/main/java/com/carbo/fleet/controllers/SyncController.java =====
 package com.carbo.fleet.controllers;
 
 import com.carbo.fleet.model.Fleet;

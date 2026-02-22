@@ -1,4 +1,4 @@
-// ===== Current file: src\main\java\com\carbo\fleet\utils\ControllerUtil.java =====
+// ===== Current file: src/main/java/com/carbo/fleet/utils/ControllerUtil.java =====
 package com.carbo.fleet.utils;
 
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
